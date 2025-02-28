@@ -6,7 +6,7 @@ export async function GET() {
     try {
       await connectDB(); // Connect to MongoDB
       const users = await User.find({role:"Product Manager"}); // Fetch all users in the database
-      console.log("only PM Data",users)
+      // console.log("only PM Data",users)
       return NextResponse.json(users, { status: 200 });
   
   

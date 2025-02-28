@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+
 export default function LoginForm() {
+  const { data: sessionData } = useSession();
+  console.log("Session: ", sessionData);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -17,6 +22,11 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+
+    // Prevent multiple submissions
+    if (isLoading) return;
+
+    setIsLoading(true);
 
     try {
       
@@ -28,17 +38,39 @@ export default function LoginForm() {
         redirect: false,
       });
 
+      console.log("Response", res);
+
       if (res?.error) {
         setError("Invalid email or password");
         return;
       }
 
-      if (res?.url) {
-        router.push(res.url);
+      if (res?.ok) {
+        console.log("Response OK");
+
+        // Wait longer and force session refresh
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const session = await getSession();
+
+        switch (session?.user.role) {
+          case "Admin":
+            router.push("/admin/product-management");
+            break;
+          case "Product Manager":
+            router.push("/productManager");
+            break;
+          case "Stakeholders":
+            router.push("/stakeholder");
+            break;
+          default:
+            setError("Invalid user role");
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
       setError("An error occurred during login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,9 +108,10 @@ export default function LoginForm() {
           {error && <div className="text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white rounded-md py-2 text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            disabled={isLoading}
+            className="w-full bg-indigo-600 text-white rounded-md py-2 text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:bg-indigo-400"
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

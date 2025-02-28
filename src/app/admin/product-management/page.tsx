@@ -314,8 +314,8 @@ export default function ProductDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Product updated successfully:", data);
-        notify("Product updated successfully", "success");
+        console.log("Product details updated successfully:", data);
+        notify("Product details updated successfully", "success");
         setShowPopupEdit(false);
         productData(); // Refresh product data
       } else {
