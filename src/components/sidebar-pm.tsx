@@ -1,22 +1,15 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 // import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-
-export default function Sidebar() {
-
-  // const { data: session, status } = useSession();
-
-
+export default function SidebarPM() {
   const router = useRouter();
   const pathname = usePathname();
   const [showPopup, setShowPopup] = useState(false);
-
-
 
   const handleSignOut = async () => {
     try {
@@ -28,32 +21,45 @@ export default function Sidebar() {
     }
   };
 
-
   return (
     <div className="w-52 min-h-[calc(100vh-4rem)] border-r flex flex-col">
       <div className="p-4 space-y-2">
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/admin/product-management"
+            pathname === "/productManager/dashboard"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          onClick={() => router.push("/admin/product-management")}
+          onClick={() => router.push("/productManager/dashboard")}
         >
-          Product Management
+          Dashboard
         </div>
 
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/admin/user-management"
+            pathname === "/productManager/product-details"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          onClick={() => router.push("/admin/user-management")}
+          onClick={() => router.push("/productManager/product-details")}
         >
-          User Management
+          Product Details
+        </div>
+
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer bg-gray-300 disabled cursor-not-allowed`
+            // ${
+            //   pathname === "/productManager/product-details"
+            //     ? "bg-primary text-white"
+            //     : "bg-white text-black border hover:bg-secondary"
+            // }`
+          }
+          // onClick={() => router.push("/productManager/product-details")}
+        >
+          TRL Level
         </div>
       </div>
+
       <div className="mt-auto p-4 ">
         <button
           onClick={() => setShowPopup(true)}
@@ -62,8 +68,6 @@ export default function Sidebar() {
           Log Out
         </button>
       </div>
-
-
 
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -88,9 +92,7 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
-        
       )}
- 
     </div>
   );
 }

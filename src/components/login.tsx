@@ -57,7 +57,7 @@ export default function LoginForm() {
             router.push("/admin/product-management");
             break;
           case "Product Manager":
-            router.push("/productManager");
+            router.push("/productManager/dashboard");
             break;
           case "Stakeholders":
             router.push("/stakeholder");

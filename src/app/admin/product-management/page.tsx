@@ -228,56 +228,7 @@ export default function ProductDashboard() {
     setShowPopupEdit(true);
   };
 
-  // const handleUpdateProduct = async () => {
-  //   setLoading(true);
-
-  //   if (!selectedProductID) {
-  //     console.error("Error: No product ID selected.");
-  //     notify("Error: No product ID selected.");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   const updatedProduct = {
-  //     _id: selectedProductID, // Ensure _id is sent in the request body
-  //     product: productName,
-  //     productManagerID: selectedManagerID,
-  //     description: description,
-  //     problemStatement: problemStatement,
-  //     solutionExpected: solutionExpected,
-  //   };
-
-  //   console.log("Sending PUT request to: /api/admin/products");
-  //   console.log("Updated Product Data:", updatedProduct);
-
-  //   try {
-  //     const response = await fetch(`/api/admin/products`, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(updatedProduct), // Send ID in the body
-  //     });
-
-  //     console.log("Response Status:", response.status);
-
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       console.log("Product updated successfully:", data);
-  //       notify("Product updated successfully", "success");
-  //       setShowPopupEdit(false);
-  //       productData(); // Refresh product data
-  //     } else {
-  //       const error = await response.json();
-  //       console.error("Failed to update product:", error);
-  //       notify("Failed to update product.", "error");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error updating product:", error);
-  //     notify("Error updating product.", "error");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
+  
   const handleUpdateProduct = async () => {
     setLoading(true);
     console.log("UPDATE CLICKED ");

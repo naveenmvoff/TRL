@@ -1,5 +1,3 @@
-// D:\IHUB\TRL\login\src\app\api\auth\[...nextauth]\route.ts
-
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/mongodb";
@@ -10,6 +8,16 @@ import bcrypt from "bcryptjs";
 declare module 'next-auth' {
     interface User {
       role?: string;
+      factory?: string | null;
+    }
+    interface Session {
+      user: {
+        id: string;
+        name?: string | null;
+        email?: string | null;
+        role?: string | null;
+        factory?: string | null;
+      }
     }
   }
 
@@ -50,6 +58,7 @@ const handler = NextAuth({
             email: user.email,
             name: user.name,
             role: user.role,
+            factory: user.factory,
           };
         } catch (error) {
           console.log("Error: ", error);
@@ -74,6 +83,7 @@ const handler = NextAuth({
         token.email = user.email;
         token.name = user.name;
         token.role = user.role;
+        token.factory = user.factory;
       }
       console.log("TOKEN AFTER ASSIGNMENT: ", token);
       console.log("USER AFTER : ", user);
@@ -88,6 +98,8 @@ const handler = NextAuth({
           name: token.name,
           email: token.email,
           role: token.role as string,
+          factory: token.factory as string
+
         };
       }
       return session;
