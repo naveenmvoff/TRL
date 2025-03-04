@@ -23,6 +23,6 @@
     },
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/properties/sections/OptionsSection.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/properties/sections/OptionsSection.tsx", "src/lib/seed.js", "src/models/trlMasterSchema.ts", "src/models/trlData.js"],
   "exclude": ["node_modules"]
 }

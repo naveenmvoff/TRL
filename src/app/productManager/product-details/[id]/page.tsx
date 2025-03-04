@@ -1,139 +1,256 @@
-"use client";
+"use client"; // This is required at the top for client components in Next.js App Router
 
+import React, { useState, useEffect } from "react";
+import { Pencil } from "lucide-react";
+import { useParams } from "next/navigation";
 import NavBar from "@/components/navbar/navbar";
-import SidebarPM from "@/components/sidebar-pm";
-import type { FC } from "react";
-import { BiEditAlt  } from "react-icons/bi";
-import { BiDetail  } from "react-icons/bi";
+import Sidebar from "@/components/sidebar-pm";
 
-
-const PenLineIcon: FC = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 20h9"></path>
-    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-  </svg>
-);
-
-const FileTextIcon: FC = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-    <polyline points="14 2 14 8 20 8"></polyline>
-    <line x1="16" y1="13" x2="8" y2="13"></line>
-    <line x1="16" y1="17" x2="8" y2="17"></line>
-    <line x1="10" y1="9" x2="8" y2="9"></line>
-  </svg>
-);
-
-interface TechFlowItem {
-  id: string;
-  description: string;
+// Define types
+interface TeamMember {
+  id: number;
+  name: string;
+  role: string;
 }
 
-interface ProductDetailsProps {
-  userName: string;
-  email: string;
-  factoryNumber: string;
-  techFlowItems: TechFlowItem[];
+interface TRLItem {
+  id: number;
+  level: number;
+  maturityLevel: string;
+  startDate: string;
+  estimatedDate: string;
+  extendedDate?: string;
+  status: "Completed" | "In Progress" | "Pending";
 }
 
-const ProductDetails: FC<ProductDetailsProps> = ({
-  userName,
-  email,
-  factoryNumber,
-  techFlowItems,
-}) => {
-  return (
-    <div className="p-6 bg-slate-100 min-h-full">
-      <h1 className="text-lg font-bold text-gray-800 mb-4">Product Details</h1>
+export default function ProductDetails() {
 
-      {/* User Info Section */}
-      <div className="bg-white rounded-md p-6 mb-4 shadow-sm">
-        <h2 className="text-black font-medium mb-4">Hello, {userName}</h2>
+  const [trlItems] = useState<TRLItem[]>([
+    {
+      id: 1,
+      level: 1,
+      maturityLevel: "Research & Exploration",
+      startDate: "2025-01-10",
+      estimatedDate: "2025-02-10",
+      status: "Completed",
+    },
+    {
+      id: 2,
+      level: 2,
+      maturityLevel: "Research & Exploration",
+      startDate: "2025-02-12",
+      estimatedDate: "2025-04-10",
+      extendedDate: "2025-04-20",
+      status: "In Progress",
+    },
+    {
+      id: 3,
+      level: 3,
+      maturityLevel: "Research & Exploration",
+      startDate: "",
+      estimatedDate: "",
+      status: "Pending",
+    },
+    {
+      id: 4,
+      level: 4,
+      maturityLevel: "Research & Exploration",
+      startDate: "",
+      estimatedDate: "",
+      status: "Pending",
+    },
+    {
+      id: 5,
+      level: 5,
+      maturityLevel: "Research & Exploration",
+      startDate: "",
+      estimatedDate: "",
+      status: "Pending",
+    },
+  ]);
 
-        <div className="space-y-2 text-sm">
-          <div className="flex">
-            <span className="text-gray-600 w-48">Product Manager Email :</span>
-            <span className="text-gray-800">{email}</span>
-          </div>
-          <div className="flex">
-            <span className="text-gray-600 w-48">Product Factory Number :</span>
-            <span className="text-gray-800">{factoryNumber}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* TechFlow Items Section */}
-      <div className="bg-white rounded-md p-6 shadow-sm">
-        {techFlowItems.map((item, index) => (
-          <div key={item.id}>
-            <div className="flex justify-between items-start py-3">
-              <div>
-                <h3 className="font-medium text-gray-800">TechFlow</h3>
-                <p className="text-sm text-gray-600">
-                  description, {item.description}
-                </p>
-              </div>
-              <div className="flex space-x-2">
-                <button className="text-indigo-600 hover:text-indigo-800">
-                  <BiEditAlt  className="w-7 h-7"/>
-                </button>
-                <button className="text-indigo-600 hover:text-indigo-800">
-                  <BiDetail className="w-7 h-7"/>
-                </button>
-              </div>
-            </div>
-            {index < techFlowItems.length - 1 && (
-              <div className="border-b border-gray-200"></div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+  const completedItems = trlItems.filter(
+    (item) => item.status === "Completed"
+  ).length;
+  const progressPercentage = Math.round(
+    (completedItems / trlItems.length) * 100
   );
-};
 
-export default function productManager() {
-  const techFlowItems = [
-    { id: "1", description: "Lorem ipsum is simply dummy text of the p" },
-    { id: "2", description: "Lorem ipsum is simply dummy text of the p" },
-    { id: "3", description: "Lorem ipsum is simply dummy text of the p" },
-  ];
+  const handleAddNewMember = () => {
+    alert("Implement 'Add New Member' functionality.");
+  };
 
+const { id } = useParams(); // Get the ID from the URL
+  const [productDetails, setProductDetails] = useState(null);
+  
+  console.log("Logg **********", productDetails )
+
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/product-manager/product?id=${id}`);
+        const data = await response.json();
+        setProductDetails(data);
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      }
+    };
+
+    fetchProductDetails();
+  }, [id]);
+
+  
+  
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="Product Manager" />
-      <div className="flex h-[calc(100vh-4rem)]"> {/* 4rem = Navbar height */}
-        <SidebarPM />
-        <div className="flex-grow overflow-y-auto">
-          <ProductDetails
-            userName="John Doe"
-            email="johndoe@abcd.com"
-            factoryNumber="1"
-            techFlowItems={techFlowItems}
-          />
+      <div className="flex flex-col sm:flex-row">
+        <Sidebar />
+
+        <div className="flex-1 flex justify-center">
+          <div className="mt-5 w-full max-w-full px-4 sm:px-6 space-y-6">
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4">
+                Product Details
+              </h2>
+              {[
+                {
+                  title: "Description",
+                  content: "Lorem Ipsum is simply dummy text...",
+                },
+                {
+                  title: "Problem Statement",
+                  content: "Lorem Ipsum is simply dummy text...",
+                },
+                {
+                  title: "Solution Expected",
+                  content: "Lorem Ipsum is simply dummy text...",
+                },
+              ].map((section) => (
+                <div key={section.title} className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">
+                    {section.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {section.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* TRL Progress Bar */}
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4">
+                TRL Progress
+              </h2>
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-full bg-gray-200 rounded-full h-8">
+                  <div
+                    className="bg-primary h-8 rounded-full"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-primary text-xl font-bold">{progressPercentage}%</span>
+              </div>
+            </div>
+
+            {/* TRL Work Flow Table */}
+            <div className="bg-white border rounded-lg p-6 mb-4">
+              <h2 className="text-lg font-semibold text-primary mb-4">
+                TRL Work Flow
+              </h2>
+
+              <div className="border rounded-lg overflow-hidden">
+                <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
+                  <table className="w-full min-w-[600px] border-collapse">
+                    <thead className="bg-gray-100 text-black text-sm font-semibold sticky top-0 z-10">
+                      <tr>
+                        {[
+                          "TRL Level",
+                          "Maturity Level",
+                          "Start Date",
+                          "Estimated Date",
+                          "Extended Date",
+                          "Status",
+                          "Actions",
+                        ].map((header) => (
+                          <th
+                            key={header}
+                            className="pl-4 py-3 text-left uppercase tracking-wide"
+                          >
+                            {header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white text-black">
+                      {trlItems.map((item, index) => (
+                        <tr
+                          key={item.id}
+                          className={`${
+                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } text-sm`}
+                        >
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium">
+                                {item.level}
+                              </div>
+                              <span className="font-semibold">
+                                TRL {item.level}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            {item.maturityLevel}
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            {item.startDate || "-"}
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            {item.estimatedDate || "-"}
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            {item.extendedDate || "-"}
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={`w-2.5 h-2.5 rounded-full ${
+                                  item.status === "Completed"
+                                    ? "bg-green-500"
+                                    : item.status === "In Progress"
+                                    ? "bg-yellow-500"
+                                    : "bg-gray-400"
+                                }`}
+                              ></span>
+                              <span className="text-xs font-medium">
+                                {item.status}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="pl-4 py-3 whitespace-nowrap">
+                            <button className="text-primary hover:text-primary2 transition">
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {trlItems.length === 0 && (
+                    <div className="py-6 text-center text-gray-500">
+                      No TRL data available.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

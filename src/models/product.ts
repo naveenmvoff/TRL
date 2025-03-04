@@ -2,11 +2,16 @@ import mongoose from "mongoose";
 
 const ProductSchema = new mongoose.Schema(
   {
-    product: { type: String, required: [true, "Product name is required"] },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    }, // // // Need to work on this
+    product: { type: String, required: [true, "Product name is required"] }, 
     productManagerID: {
-      type: String,
-      // type: object,
-      // required: [true, "Product manager is required"],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
     },
     productViewer: {
       type: Array,
@@ -24,5 +29,6 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Product = mongoose.models.Product || mongoose.model("Product", ProductSchema);
+const Product =
+  mongoose.models.Product || mongoose.model("Product", ProductSchema);
 export default Product;

@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
           case "Admin":
             return NextResponse.redirect(new URL("/admin/product-management", request.url));
           case "Product Manager":
-            return NextResponse.redirect(new URL("/productManager", request.url));
+            return NextResponse.redirect(new URL("/productManager/dashboard", request.url));
           case "Stakeholders":
             return NextResponse.redirect(new URL("/stakeholder", request.url));
           default:

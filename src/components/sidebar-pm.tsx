@@ -37,16 +37,16 @@ export default function SidebarPM() {
 
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/productManager/product-details"
+            pathname === "/productManager/product-details/${id}"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          onClick={() => router.push("/productManager/product-details")}
+          onClick={() => router.push("/productManager/product-details/${id}")}
         >
           Product Details
         </div>
 
-        <div
+        {/* <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer bg-gray-300 disabled cursor-not-allowed`
             // ${
             //   pathname === "/productManager/product-details"
@@ -57,7 +57,7 @@ export default function SidebarPM() {
           // onClick={() => router.push("/productManager/product-details")}
         >
           TRL Level
-        </div>
+        </div> */}
       </div>
 
       <div className="mt-auto p-4 ">

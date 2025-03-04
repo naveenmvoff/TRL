@@ -1,0 +1,23 @@
+import mongoose from "mongoose";
+
+const TrlLevelSchema = new mongoose.Schema({
+  productId : { type : mongoose.Schema.Types.ObjectId, ref : "product", required : true},
+  trlLevelNumberId : { type : mongoose.Schema.Types.ObjectId, ref : "trlMasterSchema", required : true},
+  trlLevelNameId : { type : mongoose.Schema.Types.ObjectId, ref : "trlMasterSchema", required : true},
+  subLevelNameId : { type : mongoose.Schema.Types.ObjectId, ref : "trlMasterSchema", required : true},
+  description: { type: String, default: "" },
+  status: { type: String, enum: ["completed", "in progress", "pending"], default: "to do" },
+  documentationLink: { type: String, default: "" },
+  otherNotes: { type: String, default: "" },
+  demoRequired: { type: Boolean, default: false },
+  demoStatus: { type: String, enum: ["completed", "pending"], default: "pending" },
+  startDate: { type: Date },
+  estimatedDate: { type: Date },
+  extendedDate: { type: Date },
+
+});
+
+const TrlLevelData =
+  mongoose.models.Level || mongoose.model("Level", TrlLevelSchema);
+
+export default TrlLevelData;
