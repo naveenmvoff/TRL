@@ -6,8 +6,11 @@ import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar/sidebar";
 import { User } from "lucide-react";
 import notify from "@/lib/notify";
+import { useSession } from "next-auth/react";
+
 
 interface User {
+  createdBy: User;
   _id: string;
   name: string;
   email: string;
@@ -29,7 +32,10 @@ export default function UserManagement() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [savingUser, setsavingUser] = useState(false);
-
+  
+  const {data:Session} = useSession();
+  const createdBy = Session?.user.id;
+  console.log("createdBy: ========", createdBy);
 
   // Fetch users Detials
   useEffect(() => {

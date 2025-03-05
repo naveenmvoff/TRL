@@ -92,11 +92,14 @@ const ProductDetails: FC<ProductDetailsProps> = ({
 export default function productManager() {
 
   const { data: Session } = useSession();
-  const [productData, setProductData] = useState(null);
+  interface ProductData {
+    products: any[];
+  }
+  const [productData, setProductData] = useState<ProductData | null>(null);
 
   console.log("productData********", productData);
   const PMID =  Session?.user?.id;
-  console.log(PMID);
+  console.log("PMID: ", PMID);
 
 
 
@@ -105,6 +108,7 @@ export default function productManager() {
       if (PMID) {
         const response = await fetch(`/api/product-manager/pm?id=${Session.user.id}`);
         const data = await response.json();
+        console.log("PM DATA=====", data);
         setProductData(data);
         
       }
@@ -116,7 +120,6 @@ export default function productManager() {
 console.log("productData", productData);
 
 
-  
 
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
@@ -128,7 +131,9 @@ console.log("productData", productData);
             userName={Session?.user?.name || ""}
             email={Session?.user?.email || ""}
             factoryNumber={Session?.user?.factory || "Not assigned"}
-            productsData={productData || []}  // Provide empty array as fallback
+            // productsData={productData || []}  // Provide empty array as fallback
+            productsData={productData?.products || []}
+
           />
         </div>
       </div>

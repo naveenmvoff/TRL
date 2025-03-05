@@ -7,19 +7,27 @@ import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar/sidebar";
 import notify from "@/lib/notify";
 import { set } from "mongoose";
+import { useSession } from "next-auth/react";
 // import CreateNewProductComp from "@/components/admin-createnewproduct/admin";
+
+interface User {
+  _id: string;
+  name: string;
+}
 
 interface Product {
   _id: string;
   product: string;
+  createdBy: User;
   productManagerID: string;
   productViewer: string[];
   description: string;
   problemStatement: string;
   solutionExpected: string;
+  createdAt: string;
 }
 
-export default function ProductDashboard() {
+export default function ProductManagementPage() {
   const [showPopupCreateNewProduct, setShowPopupCreateNewProduct] =
     useState(false);
   const [managers, setManagers] = useState<
@@ -31,6 +39,7 @@ export default function ProductDashboard() {
 
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const [productName, setProductName] = useState("");
   const [selectedManagerID, setselectedManagerID] = useState("");
   const [description, setDescription] = useState("");
@@ -45,13 +54,36 @@ export default function ProductDashboard() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [showPopupEdit, setShowPopupEdit] = useState(false);
 
+  console.log("productDetails-------------", productDetails);
 
-  // console.log("selectedViewersID-------------", selectedViewersID);
-  // console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
+  console.log("selectedViewersID-------------", selectedViewersID);
+  console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
 
+  // // ==================Product Creating person validation!=============================
+  const { data: Session } = useSession();
+  const createdBy =  Session?.user?.id;
+  console.log("createdBy: ", createdBy);
 
 
   useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch("/api/admin/products");
+        const data = await response.json();
+
+        if (data.success) {
+          setProducts(data.products);
+        } else {
+          console.error("Failed to fetch products:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+
     pmData();
     productData();
     userData();
@@ -103,11 +135,11 @@ export default function ProductDashboard() {
         method: "GET",
       });
       console.log("GET", response);
+
       if (response) {
         const data = await response.json();
         // console.log("GET ALL PRODUCT DATA -----------------------", data);
-
-        setProductDetails(data);
+        setProductDetails(data.products);
       } else {
         console.error("Failed to fetch Product.");
         // notify("Failed to fetch users.");
@@ -130,10 +162,12 @@ export default function ProductDashboard() {
     ) {
       console.log("Please fill all required fields");
       notify("Please fill all required fields", "error");
+      return;
     }
 
     try {
       const payload = {
+        createdBy: Session?.user.id,
         product: productName,
         productManagerID: selectedManagerID,
         productViewer: selectedViewers,
@@ -152,7 +186,8 @@ export default function ProductDashboard() {
 
       const data = await response.json();
 
-      console.log("API Response:", response, data);
+      console.log("API Response: ", response, data);
+      console.log("API Data: ", data);
 
       if (!response.ok) {
         if (data.errors) {
@@ -228,7 +263,6 @@ export default function ProductDashboard() {
     setShowPopupEdit(true);
   };
 
-  
   const handleUpdateProduct = async () => {
     setLoading(true);
     console.log("UPDATE CLICKED ");
@@ -242,6 +276,7 @@ export default function ProductDashboard() {
     }
 
     const updatedProduct = {
+      createdBy: Session?.user.id,
       _id: selectedProductID, // Ensure _id is sent in the request body
       product: productName,
       productManagerID: selectedManagerID,
@@ -329,17 +364,13 @@ export default function ProductDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {productDetails.map((data) => {
+                  {/* {productDetails.map((data) => {
                     return (
                       <tr key={data._id} className="text-sm text-black">
                         <td className="pl-4 py-3 whitespace-nowrap text-left">
                           {data.product}
                         </td>
-                        {/* <td className="pl-1 py-3 whitespace-nowrap text-left">
-                          {managers
-                            .filter((i) => i._id === data.productManagerID)
-                            .map((i) => i.name).length || "-"}
-                        </td> */}
+                  
 
                         <td className="pl-1 py-3 whitespace-nowrap text-left">
                           {managers.find((i) => i._id === data.productManagerID)
@@ -362,7 +393,38 @@ export default function ProductDashboard() {
                         </td>
                       </tr>
                     );
-                  })}
+                  })} */}
+
+                  {(Array.isArray(productDetails) ? productDetails : []).map(
+                    (data) => {
+                      return (
+                        <tr key={data._id} className="text-sm text-black">
+                          <td className="pl-4 py-3 whitespace-nowrap text-left">
+                            {data.product}
+                          </td>
+                          <td className="pl-1 py-3 whitespace-nowrap text-left">
+                            {managers.find(
+                              (i) => i._id === data.productManagerID
+                            )?.name || "PM not assigned!"}
+                          </td>
+                          <td className="pl-1 py-3 whitespace-nowrap text-left">
+                            <button
+                              onClick={() => handleEditClick(data._id)}
+                              className="text-primary hover:underline mr-2"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(data._id)}
+                              className="text-red1 hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
                 </tbody>
               </table>
             </div>
@@ -420,6 +482,16 @@ export default function ProductDashboard() {
                       value: manager._id,
                       label: `${manager.name} - ${manager.email}`,
                     }))}
+                    value={
+                      managers.find((m) => m._id === selectedManagerID)
+                        ? {
+                            value: selectedManagerID,
+                            label: managers.find(
+                              (m) => m._id === selectedManagerID
+                            )?.name,
+                          }
+                        : null
+                    }
                     onChange={(e: any) => setselectedManagerID(e.value)}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   ></Select>
