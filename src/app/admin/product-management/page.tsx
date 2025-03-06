@@ -8,6 +8,7 @@ import Sidebar from "@/components/sidebar/sidebar";
 import notify from "@/lib/notify";
 import { set } from "mongoose";
 import { useSession } from "next-auth/react";
+import { error } from "console";
 // import CreateNewProductComp from "@/components/admin-createnewproduct/admin";
 
 interface User {
@@ -16,9 +17,9 @@ interface User {
 }
 
 interface Product {
+  userID: User;
   _id: string;
   product: string;
-  createdBy: User;
   productManagerID: string;
   productViewer: string[];
   description: string;
@@ -45,7 +46,6 @@ export default function ProductManagementPage() {
   const [description, setDescription] = useState("");
   const [problemStatement, setProblemStatement] = useState("");
   const [solutionExpected, setSolutionExpected] = useState("");
-  const [productDetails, setProductDetails] = useState<Product[]>([]);
   const [selectedViewers, setselectedViewers] = useState<string[]>([]);
   const [selectedViewersID, setSelectedViewersID] = useState<string[]>([]);
   const [selectedProductID, setSelectedProductID] = useState<string | null>(
@@ -54,16 +54,23 @@ export default function ProductManagementPage() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [showPopupEdit, setShowPopupEdit] = useState(false);
 
-  console.log("productDetails-------------", productDetails);
 
   console.log("selectedViewersID-------------", selectedViewersID);
   console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
 
   // // ==================Product Creating person validation!=============================
   const { data: Session } = useSession();
-  const createdBy =  Session?.user?.id;
-  console.log("createdBy: ", createdBy);
+  const userID = Session?.user?.id;
+  console.log("userID: ", userID);
+  const [productDetails, setProductDetails] = useState<Product[]>([]);
+  console.log("productDetails-------------", productDetails);
 
+  useEffect(() => {
+    if (Session?.user?.id) {
+      console.log("userID: ", Session.user.id);
+      productData(Session.user.id); // ✅ Pass userID as an argument
+    }
+  }, [Session]);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -74,7 +81,7 @@ export default function ProductManagementPage() {
         if (data.success) {
           setProducts(data.products);
         } else {
-          console.error("Failed to fetch products:", data.message);
+          console.log("Error!, Failed to fetch products:", data.message);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -129,12 +136,20 @@ export default function ProductManagementPage() {
 
   // TO Get Product DATA for Dashboard
 
-  const productData = async () => {
+  const productData = async (userId?: string) => {
+    const currentUserId = userId || userID;
+    console.log("userID*************: ", currentUserId);
+
+    // if (!currentUserId) {
+    //   console.error("User ID is undefined. Cannot fetch products.");
+    //   return;
+    // }
+
     try {
-      const response = await fetch("/api/admin/products", {
+      const response = await fetch(`/api/admin/products?userID=${userID}`, {
         method: "GET",
       });
-      console.log("GET", response);
+      console.log("GET response ***********", response);
 
       if (response) {
         const data = await response.json();
@@ -167,7 +182,7 @@ export default function ProductManagementPage() {
 
     try {
       const payload = {
-        createdBy: Session?.user.id,
+        userID: Session?.user.id,
         product: productName,
         productManagerID: selectedManagerID,
         productViewer: selectedViewers,
@@ -276,7 +291,7 @@ export default function ProductManagementPage() {
     }
 
     const updatedProduct = {
-      createdBy: Session?.user.id,
+      userID: Session?.user.id,
       _id: selectedProductID, // Ensure _id is sent in the request body
       product: productName,
       productManagerID: selectedManagerID,

@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
+import { useParams } from "next/navigation";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-pm";
 
-import { useParams } from "next/navigation";
-import { ObjectId } from "mongoose";
+// const { id } = useParams();
+// console.log("ID's Value ========: ", id);
+
+
 
 interface TRLItem {
   id: number;
@@ -18,18 +21,9 @@ interface TRLItem {
   status: "Completed" | "In Progress" | "Pending";
 }
 
-interface ProductDetails {
-  createdAt: ObjectId;
-  product: string;
-  productManagerID: ObjectId;
-  productViewer: ObjectId[];
-  description: string;
-  problemStatement: string;
-  solutionExpected: string;
-}
-
 export default function ProductDetails() {
-  const [trlItems, setTrlItems] = useState<TRLItem[]>([
+
+  const [trlItems] = useState<TRLItem[]>([
     {
       id: 1,
       level: 1,
@@ -80,25 +74,22 @@ export default function ProductDetails() {
     (completedItems / trlItems.length) * 100
   );
 
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null
-  );
+  // const handleAddNewMember = () => {
+  //   alert("Implement 'Add New Member' functionality.");
+  // };
 
-  console.log("TRL ITEMS: ", trlItems);
-  console.log("productDetails******** : ", productDetails);
-
-  const params = useParams();
-  const id = params.id as string;
-  console.log("Product ID: ", id);
+const { id } = useParams(); // Get the ID from the URL
+  const [productDetails, setProductDetails] = useState(null);
+  
+  console.log("Logg **********", productDetails )
 
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) return;
-
+      
       try {
         const response = await fetch(`/api/product-manager/product?id=${id}`);
         const data = await response.json();
-        console.log("ProductDetails : ", data);
         setProductDetails(data);
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -108,26 +99,8 @@ export default function ProductDetails() {
     fetchProductDetails();
   }, [id]);
 
-  useEffect(() => {
-    const fetchTrlDetails = async () => {
-      try {
-        const response = await fetch('/api/trl');
-        const data = await response.json();
-        
-        if (data.success) {
-          // Update your state with the TRL data
-          setTrlItems(data.data);
-        } else {
-          console.error("Failed to fetch TRL details:", data.error);
-        }
-      } catch (error) {
-        console.error("Error fetching TRL details:", error);
-      }
-    };
-
-    fetchTrlDetails();
-  }, []); // Empty dependency array means this runs once when component mounts
-
+  
+  
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="Product Manager" />
@@ -142,20 +115,20 @@ export default function ProductDetails() {
               </h2>
               {[
                 {
-                  title: "Description", 
-                  content: productDetails?.description,
+                  title: "Description",
+                  content: "Lorem Ipsum is simply dummy text...",
                 },
                 {
                   title: "Problem Statement",
-                  content: productDetails?.problemStatement,
+                  content: "Lorem Ipsum is simply dummy text...",
                 },
                 {
                   title: "Solution Expected",
-                  content: productDetails?.solutionExpected,
+                  content: "Lorem Ipsum is simply dummy text...",
                 },
               ].map((section) => (
                 <div key={section.title} className="mb-4">
-                  <h3 className="text-base font-semibold text-gray-700">
+                  <h3 className="text-sm font-medium text-gray-500">
                     {section.title}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
@@ -177,9 +150,7 @@ export default function ProductDetails() {
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
-                <span className="text-primary text-xl font-bold">
-                  {progressPercentage}%
-                </span>
+                <span className="text-primary text-xl font-bold">{progressPercentage}%</span>
               </div>
             </div>
 

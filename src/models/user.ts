@@ -1,10 +1,14 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  
+  userID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   name: {
     type: String,
-    require : [true, "Please provide a name"]
+    require: [true, "Please provide a name"],
   },
   email: {
     type: String,
@@ -30,4 +34,3 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
-

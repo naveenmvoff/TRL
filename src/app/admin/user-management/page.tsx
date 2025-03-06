@@ -8,9 +8,8 @@ import { User } from "lucide-react";
 import notify from "@/lib/notify";
 import { useSession } from "next-auth/react";
 
-
 interface User {
-  createdBy: User;
+  userID: User;
   _id: string;
   name: string;
   email: string;
@@ -32,27 +31,37 @@ export default function UserManagement() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [savingUser, setsavingUser] = useState(false);
-  
-  const {data:Session} = useSession();
-  const createdBy = Session?.user.id;
-  console.log("createdBy: ========", createdBy);
+
+  // // ==================User Creating person validation!=============================
+  const { data: Session } = useSession();
+  const userID = Session?.user.id;
+  console.log("userID: ========", userID);
+
+  useEffect(() => {
+    if (Session?.user?.id) {
+      console.log("userID: ", Session.user.id);
+      fetchUsers(Session.user.id); // ✅ Pass userID as an argument
+    }
+  }, [Session]);
 
   // Fetch users Detials
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (userId?: string) => {
+    const currentUserId = userId || userID;
+    console.log("userID*************: ", currentUserId);
     try {
-      const response = await fetch("/api/admin/user-management", {
+      const response = await fetch(`/api/admin/user-management?userID=${userID}`, {
         method: "GET",
       });
       if (response.ok) {
         const data = await response.json();
         setUsers(data); // Set the fetched users in state
       } else {
-        console.error("Failed to fetch users.");
-        notify("Failed to fetch users.");
+        console.log("Failed to fetch users.");
+        // notify("No user found!");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -85,25 +94,24 @@ export default function UserManagement() {
   };
 
   // Edit User Data
-                const handleEditClick = (user: User) => {
-                  setIsEditing(true);
-                  setEditingUser(user);
-                  setNameEdit(user.name);
-                  setEmail(user.email);
-                  setRoleEdit(user.role);
-                  setShowIfPm(user.role === "Product Manager");
-                  setShowPopupEdit(true);
-                };
+  const handleEditClick = (user: User) => {
+    setIsEditing(true);
+    setEditingUser(user);
+    setNameEdit(user.name);
+    setEmail(user.email);
+    setRoleEdit(user.role);
+    setShowIfPm(user.role === "Product Manager");
+    setShowPopupEdit(true);
+  };
 
-                // handleClosePopupEdit for Update New User
-                const handleClosePopupEdit = () => {
-                  setShowPopupEdit(false);
-                  setShowIfPm(false);
-                  setIsEditing(false);
-                  setEditingUser(null);
-                  resetForm();
-                };
-
+  // handleClosePopupEdit for Update New User
+  const handleClosePopupEdit = () => {
+    setShowPopupEdit(false);
+    setShowIfPm(false);
+    setIsEditing(false);
+    setEditingUser(null);
+    resetForm();
+  };
 
   // handleClosePopup for Create New User
   const handleClosePopup = () => {
@@ -140,7 +148,6 @@ export default function UserManagement() {
 
   // // Add new User
   const handleSaveUser = async () => {
-  
     const name = (
       document.querySelector(
         'input[placeholder="Enter user name"]'
@@ -177,14 +184,13 @@ export default function UserManagement() {
     }
 
     try {
-   
       setsavingUser(true);
       const response = await fetch("/api/admin/user-management", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, role, factoryNumber }),
+        body: JSON.stringify({ name, email, role, factoryNumber, userID }),
       });
 
       const result = await response.json();
@@ -208,7 +214,6 @@ export default function UserManagement() {
     }
   };
 
-  
   // // Update User detials in the Data Base
   const handleUpdateUser = async () => {
     if (!editingUser) return;
@@ -245,6 +250,7 @@ export default function UserManagement() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          userID,
           userId: editingUser._id,
           name,
           email,
@@ -271,7 +277,6 @@ export default function UserManagement() {
       notify("Something went wrong. Please try again.");
     }
   };
-
 
   // Delete User Click
   const handleDeleteClick = (userId: string) => {
@@ -305,7 +310,6 @@ export default function UserManagement() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="Admin" />
@@ -314,7 +318,9 @@ export default function UserManagement() {
         <div className="flex-1 p-4 sm:p-6">
           {/* Header section aligned with product management */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-primary">User Management</h2>
+            <h2 className="text-lg font-semibold text-primary">
+              User Management
+            </h2>
             <button
               onClick={() => setShowPopup(true)}
               className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary2"
@@ -338,11 +344,22 @@ export default function UserManagement() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.map((user) => (
-                    <tr key={user._id} className="text-sm text-black hover:bg-gray-50">
-                      <td className="pl-4 py-3 whitespace-nowrap text-left">{user.name}</td>
-                      <td className="pl-1 py-3 whitespace-nowrap text-left">{user.email}</td>
-                      <td className="pl-1 py-3 whitespace-nowrap text-left">{user.role}</td>
-                      <td className="pl-1 py-3 whitespace-nowrap text-left">{user.factory ?? "-"}</td>
+                    <tr
+                      key={user._id}
+                      className="text-sm text-black hover:bg-gray-50"
+                    >
+                      <td className="pl-4 py-3 whitespace-nowrap text-left">
+                        {user.name}
+                      </td>
+                      <td className="pl-1 py-3 whitespace-nowrap text-left">
+                        {user.email}
+                      </td>
+                      <td className="pl-1 py-3 whitespace-nowrap text-left">
+                        {user.role}
+                      </td>
+                      <td className="pl-1 py-3 whitespace-nowrap text-left">
+                        {user.factory ?? "-"}
+                      </td>
                       <td className="pl-1 py-3 whitespace-nowrap text-left">
                         <button
                           onClick={() => handleDeleteClick(user._id)}
@@ -365,7 +382,9 @@ export default function UserManagement() {
             <div className="bg-white p-6 rounded-lg shadow-lg min-w-96 max-h-[100vh] ">
               <div className="max-h-[90vh]">
                 <div className="flex flex-row justify-between items-start sticky top-0 bg-white">
-                  <h3 className="text-lg font-semibold text-black">Create New User</h3>
+                  <h3 className="text-lg font-semibold text-black">
+                    Create New User
+                  </h3>
                   <button
                     onClick={() => setShowPopup(false)}
                     className="text-red1 hover:text-black"
@@ -418,15 +437,23 @@ export default function UserManagement() {
                       onChange={handleRoleChange}
                       className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                     >
-                      <option value="" className="text-black bg-gray-300">Select Role</option>
-                      <option value="Stakeholders" className="text-black">Stakeholders</option>
-                      <option value="Product Manager" className="text-black">Product Manager</option>
+                      <option value="" className="text-black bg-gray-300">
+                        Select Role
+                      </option>
+                      <option value="Stakeholders" className="text-black">
+                        Stakeholders
+                      </option>
+                      <option value="Product Manager" className="text-black">
+                        Product Manager
+                      </option>
                     </select>
                   </div>
 
                   {showIfPm && (
                     <div>
-                      <p className="text-md font-regular text-black">Factory Number</p>
+                      <p className="text-md font-regular text-black">
+                        Factory Number
+                      </p>
                       <input
                         type="text"
                         placeholder="Enter user factory number"
@@ -462,7 +489,9 @@ export default function UserManagement() {
         {showPopupDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full mx-4">
-              <p className="text-black mb-6">Are you sure you want to delete this user?</p>
+              <p className="text-black mb-6">
+                Are you sure you want to delete this user?
+              </p>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setShowPopupDelete(false)}
@@ -486,14 +515,7 @@ export default function UserManagement() {
             </div>
           </div>
         )}
-
-
-
-
       </div>
     </div>
   );
-
-
-
 }

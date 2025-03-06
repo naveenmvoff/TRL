@@ -22,10 +22,24 @@ const toObjectIdArray = (ids: string[]) => {
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const products = await Product.find()
-      .populate("createdBy", "name email")
-      .populate("productManagerID", "name email")
-      .populate("productViewer", "name email");
+
+    // const userID = req.nextUrl.searchParams.get("userID");
+    const { searchParams } = new URL(req.url);
+    const userID = searchParams.get("userID");
+    console.log("userID================", userID);
+
+    if (!userID) {
+      return NextResponse.json(
+        { success: false, message: "Missing userID in request" },
+        { status: 400 }
+      );
+    }
+    const products = await Product.find({userID: userID})
+      // .populate("userID", "name email")
+      // .populate("productManagerID", "name email")
+      // .populate("productViewer", "name email");
+
+    console.log("GET products:", products);
 
     return NextResponse.json({ success: true, products }, { status: 200 });
   } catch (error) {
@@ -51,7 +65,7 @@ export async function POST(req: NextRequest) {
       description,
       problemStatement,
       solutionExpected,
-      createdBy,
+      userID,
     } = body;
 
     if (
@@ -60,7 +74,7 @@ export async function POST(req: NextRequest) {
       !description ||
       !problemStatement ||
       !solutionExpected ||
-      !createdBy
+      !userID
     ) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -73,7 +87,7 @@ export async function POST(req: NextRequest) {
     const viewerObjectIds = toObjectIdArray(productViewer || []);
 
     const newProduct = new Product({
-      createdBy: createdBy, // Make sure you pass userId from session in request body
+      userID: userID, // Make sure you pass userId from session in request body
       product,
       // productManagerID: new mongoose.Types.ObjectId(productManagerID),
       productManagerID: managerObjectId,
@@ -131,7 +145,7 @@ export async function PUT(req: NextRequest) {
     // const updatedProduct = await Product.findByIdAndUpdate(
     //   productId,
     //   {
-    //     createdBy: existingProduct.createdBy, // Preserve createdBy
+    //     userID: existingProduct.userID, // Preserve userID
     //     product,
     //     productManagerID,
     //     productViewer,
@@ -164,7 +178,7 @@ export async function PUT(req: NextRequest) {
       },
       { new: true }
     )
-      .populate("createdBy", "name email")
+      .populate("userID", "name email")
       .populate("productManagerID", "name email")
       .populate("productViewer", "name email");
 

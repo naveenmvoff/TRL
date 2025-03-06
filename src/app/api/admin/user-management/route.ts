@@ -1,15 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcryptjs"
 import nodemailer from "nodemailer";
 import { error } from "console";
+import mongoose from "mongoose";
+
+
+// Utility function to validate and convert to ObjectId
+const toObjectId = (id: string) => {
+  if (mongoose.isValidObjectId(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  throw new Error(`Invalid ObjectId: ${id}`);
+};
+
+// Utility function to validate array of ids
+const toObjectIdArray = (ids: string[]) => {
+  return ids
+    .filter((id) => mongoose.isValidObjectId(id)) // Keep only valid IDs
+    .map((id) => new mongoose.Types.ObjectId(id));
+};
+
 
 // Create user in the database
 export async function POST(req: Request) {
   try {
-    const { name, email, role, factoryNumber } = await req.json();
-    console.log(name, email, role, factoryNumber )
+    const { name, email, role, factoryNumber, userID } = await req.json();
+    console.log(name, email, role, factoryNumber, userID )
 
     if (!name || !email || !role) {
       return NextResponse.json(
@@ -37,6 +55,7 @@ export async function POST(req: Request) {
 
     // Create a new user
     const newUser = new User({
+      userID,
       name,
       email,
       password: hashedPassword, // Placeholder password
@@ -117,16 +136,35 @@ export async function POST(req: Request) {
 }
 
 // Fetch all users in the database
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectDB(); // Connect to MongoDB
-    const users = await User.find(); // Fetch all users in the database
-    return NextResponse.json(users, { status: 200 });
 
+    const {searchParams} = new URL(req.url);
+    const userID = searchParams.get("userID")
+
+    if (!userID) {
+      return NextResponse.json(
+        {success: false, message: "Missing userID in request"},
+        {status: 400}
+    );
+    }
+    
+    if (userID) {
+      const users = await User.find({userID: userID})
+      return NextResponse.json(users, { status: 200 });
+    }else{
+      const users = "No user found";
+      return NextResponse.json(
+        {users, message: "No user found"},
+        {status: 200}
+      )
+    }
 
   } catch (error) {
     console.error("Error fetching users:", error);
-    return NextResponse.json({ message: "Failed to fetch users." }, { status: 500 });
+    // return NextResponse.json({ message: "Failed to fetch users." }, { status: 500 });
+    return NextResponse.json({ message: "No user found" }, { status: 500 });
   }
 }
 

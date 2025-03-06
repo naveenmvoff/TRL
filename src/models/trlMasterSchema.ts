@@ -29,7 +29,7 @@ export default TRL;
 
 
 
-// // // // // // ==============================JAVASCRIPT .JS FILE CODE=====================================
+// // // // // // ==============================JAVASCRIPT .JS FILE CODE - when run this use the file extension as .js=====================================
 
 
 // import mongoose from "mongoose";

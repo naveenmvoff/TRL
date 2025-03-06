@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+    console.log("Product found:", product);
 
     return NextResponse.json(product);
   } catch (error) {
