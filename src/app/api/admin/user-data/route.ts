@@ -3,14 +3,17 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 
 export async function GET() {
-    try {
-      await connectDB(); // Connect to MongoDB
-      const users = await User.find({role:{ $in: ["Product Manager", "Stakeholders"] }}); // Fetch all users in the database
-      return NextResponse.json(users, { status: 200 });
-  
-  
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      return NextResponse.json({ message: "Failed to fetch users." }, { status: 500 });
-    }
+  try {
+    await connectDB(); // Connect to MongoDB
+    const users = await User.find({
+      role: { $in: ["Product Manager", "Stakeholders"] },
+    }); // Fetch all users in the database
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch users." },
+      { status: 500 }
+    );
   }
+}

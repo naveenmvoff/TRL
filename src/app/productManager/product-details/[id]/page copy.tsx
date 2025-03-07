@@ -2,14 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
-import { useParams } from "next/navigation";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-pm";
 
-// const { id } = useParams();
-// console.log("ID's Value ========: ", id);
-
-
+import { useParams } from "next/navigation";
+import { ObjectId } from "mongoose";
 
 interface TRLItem {
   id: number;
@@ -21,9 +18,18 @@ interface TRLItem {
   status: "Completed" | "In Progress" | "Pending";
 }
 
-export default function ProductDetails() {
+interface ProductDetails {
+  createdAt: ObjectId;
+  product: string;
+  productManagerID: ObjectId;
+  productViewer: ObjectId[];
+  description: string;
+  problemStatement: string;
+  solutionExpected: string;
+}
 
-  const [trlItems] = useState<TRLItem[]>([
+export default function ProductDetails() {
+  const [trlItems, setTrlItems] = useState<TRLItem[]>([
     {
       id: 1,
       level: 1,
@@ -74,22 +80,25 @@ export default function ProductDetails() {
     (completedItems / trlItems.length) * 100
   );
 
-  // const handleAddNewMember = () => {
-  //   alert("Implement 'Add New Member' functionality.");
-  // };
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
+    null
+  );
 
-const { id } = useParams(); // Get the ID from the URL
-  const [productDetails, setProductDetails] = useState(null);
-  
-  console.log("Logg **********", productDetails )
+  console.log("TRL ITEMS: ", trlItems);
+  console.log("productDetails******** : ", productDetails);
+
+  const params = useParams();
+  const id = params.id as string;
+  console.log("Product ID: ", id);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) return;
-      
+
       try {
         const response = await fetch(`/api/product-manager/product?id=${id}`);
         const data = await response.json();
+        console.log("ProductDetails : ", data);
         setProductDetails(data);
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -99,8 +108,18 @@ const { id } = useParams(); // Get the ID from the URL
     fetchProductDetails();
   }, [id]);
 
-  
-  
+  useEffect(() => {
+    const fetchTrlDetials = async () => {
+      try {
+        await fetch(`/api/trl`);
+      } catch (error) {
+        console.log("Unable to GET TRL Detials", error);  
+      }
+    }
+
+    fetchTrlDetials();
+  })
+
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="Product Manager" />
@@ -115,20 +134,20 @@ const { id } = useParams(); // Get the ID from the URL
               </h2>
               {[
                 {
-                  title: "Description",
-                  content: "Lorem Ipsum is simply dummy text...",
+                  title: "Description", 
+                  content: productDetails?.description,
                 },
                 {
                   title: "Problem Statement",
-                  content: "Lorem Ipsum is simply dummy text...",
+                  content: productDetails?.problemStatement,
                 },
                 {
                   title: "Solution Expected",
-                  content: "Lorem Ipsum is simply dummy text...",
+                  content: productDetails?.solutionExpected,
                 },
               ].map((section) => (
                 <div key={section.title} className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-base font-semibold text-gray-700">
                     {section.title}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
@@ -150,7 +169,9 @@ const { id } = useParams(); // Get the ID from the URL
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
-                <span className="text-primary text-xl font-bold">{progressPercentage}%</span>
+                <span className="text-primary text-xl font-bold">
+                  {progressPercentage}%
+                </span>
               </div>
             </div>
 

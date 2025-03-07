@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 interface SubLevel {
   subLevelName: string;
+  subLevelNumber: number;
 };
 
 interface TRLDocument extends Document {
@@ -12,6 +13,7 @@ interface TRLDocument extends Document {
 
 const subLevelSchema = new Schema<SubLevel>({
   subLevelName: { type: String, required: true },
+  subLevelNumber: { type: Number, required: true },
 });
 
 const trlSchema = new Schema<TRLDocument>({
@@ -20,7 +22,7 @@ const trlSchema = new Schema<TRLDocument>({
   subLevels: [subLevelSchema],
 });
 
-const TRL = mongoose.model<TRLDocument>("TRL", trlSchema);
+const TRL = mongoose.models.TRL || mongoose.model<TRLDocument>("TRL", trlSchema);
 
 export default TRL;
 
@@ -36,12 +38,18 @@ export default TRL;
 
 // const subLevelSchema = new mongoose.Schema({
 //   subLevelName: { type: String, required: true },
+//   subLevelNumber: { type: Number, required: true },
 // });
 
 // const trlSchema = new mongoose.Schema({
 //   trlLevelNumber: { type: Number, required: true, unique: true },
 //   trlLevelName: { type: String, required: true },
 //   subLevels: [subLevelSchema],
+//   // startDate: { type: Date },
+//   // estimatedDate: { type: Date },
+//   // extendedDate: { type: Date },
+
+
 // });
 
 // const TRL = mongoose.model("TRL", trlSchema);

@@ -30,48 +30,22 @@ interface ProductDetails {
 
 export default function ProductDetails() {
   const [trlItems, setTrlItems] = useState<TRLItem[]>([
-    {
-      id: 1,
-      level: 1,
-      maturityLevel: "Research & Exploration",
-      startDate: "2025-01-10",
-      estimatedDate: "2025-02-10",
-      status: "Completed",
-    },
-    {
-      id: 2,
-      level: 2,
-      maturityLevel: "Research & Exploration",
-      startDate: "2025-02-12",
-      estimatedDate: "2025-04-10",
-      extendedDate: "2025-04-20",
-      status: "In Progress",
-    },
-    {
-      id: 3,
-      level: 3,
-      maturityLevel: "Research & Exploration",
-      startDate: "",
-      estimatedDate: "",
-      status: "Pending",
-    },
-    {
-      id: 4,
-      level: 4,
-      maturityLevel: "Research & Exploration",
-      startDate: "",
-      estimatedDate: "",
-      status: "Pending",
-    },
-    {
-      id: 5,
-      level: 5,
-      maturityLevel: "Research & Exploration",
-      startDate: "",
-      estimatedDate: "",
-      status: "Pending",
-    },
+    // {
+    //   id: 1,
+    //   level: 1,
+    //   maturityLevel: "Research & Exploration",
+    //   startDate: "2025-01-10",
+    //   estimatedDate: "2025-02-10",
+    //   status: "Completed",
+    // }
+
   ]);
+
+  const trlItemsArray = trlItems.map((item) => ({
+    /////////////////////////////////////////////////////////////////////////// TO BE CONTINUED
+  }))
+  // const [trlItems, setTrlItems] = useState([]);
+  console.log("trlItems   ********: ", trlItems);
 
   const completedItems = trlItems.filter(
     (item) => item.status === "Completed"
@@ -85,12 +59,13 @@ export default function ProductDetails() {
   );
 
   console.log("TRL ITEMS: ", trlItems);
-  console.log("productDetails******** : ", productDetails);
+  // console.log("productDetails******** : ", productDetails);
 
   const params = useParams();
   const id = params.id as string;
-  console.log("Product ID: ", id);
+  // console.log("Product ID: ", id);
 
+  // // =============GET PRODUCT DETAILS===============
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) return;
@@ -98,7 +73,7 @@ export default function ProductDetails() {
       try {
         const response = await fetch(`/api/product-manager/product?id=${id}`);
         const data = await response.json();
-        console.log("ProductDetails : ", data);
+        // console.log("ProductDetails : ", data);
         setProductDetails(data);
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -108,14 +83,17 @@ export default function ProductDetails() {
     fetchProductDetails();
   }, [id]);
 
+  // // =============GET TRL LEVEL DETAILS===============
   useEffect(() => {
     const fetchTrlDetails = async () => {
       try {
-        const response = await fetch('/api/trl');
+        const response = await fetch("/api/trl");
         const data = await response.json();
-        
+        console.log("TRL Master Data=====", data);
+
         if (data.success) {
           // Update your state with the TRL data
+          console.log("TRL Master Data of Data=====", data);
           setTrlItems(data.data);
         } else {
           console.error("Failed to fetch TRL details:", data.error);
@@ -142,7 +120,7 @@ export default function ProductDetails() {
               </h2>
               {[
                 {
-                  title: "Description", 
+                  title: "Description",
                   content: productDetails?.description,
                 },
                 {

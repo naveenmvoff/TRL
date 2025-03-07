@@ -9,7 +9,9 @@ import notify from "@/lib/notify";
 import { set } from "mongoose";
 import { useSession } from "next-auth/react";
 import { error } from "console";
+import { connectDB } from "@/lib/mongodb";
 // import CreateNewProductComp from "@/components/admin-createnewproduct/admin";
+import TRL from "@/models/trlMasterSchema";
 
 interface User {
   _id: string;
@@ -53,17 +55,19 @@ export default function ProductManagementPage() {
   );
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [showPopupEdit, setShowPopupEdit] = useState(false);
+  const [trlDetials, setTrlDetials] = useState([]);
 
+  console.log("trlDetials", trlDetials);
 
-  console.log("selectedViewersID-------------", selectedViewersID);
-  console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
+  // console.log("selectedViewersID-------------", selectedViewersID);
+  // console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
 
   // // ==================Product Creating person validation!=============================
   const { data: Session } = useSession();
   const userID = Session?.user?.id;
   console.log("userID: ", userID);
   const [productDetails, setProductDetails] = useState<Product[]>([]);
-  console.log("productDetails-------------", productDetails);
+  // console.log("productDetails-------------", productDetails);
 
   useEffect(() => {
     if (Session?.user?.id) {
@@ -115,6 +119,33 @@ export default function ProductManagementPage() {
     }
   };
 
+  //====== Fetch the TRL Master Data ======
+
+  const trlMasterData = async () => {
+    console.log("Inside TRL Master Data");
+
+    try {
+      const response = await fetch("/api/trl");
+      console.log("ItrlMD - Got responce");
+      const data = await response.json();
+      // console.log("TRL Master Data=====", data);
+      if (data.success) {
+        setTrlDetials(data.data);
+      } else {
+        console.error("Failed to fetch TRL details:", data.error);
+      }
+    } catch (error) {
+      console.log("Unable to GET TRL Details", error);
+      return Response.json(
+        {
+          success: false,
+          error: "Failed to fetch TRL details",
+        },
+        { status: 500 }
+      );
+    }
+  };
+
   // TO Get ALL USER DATA
   const userData = async () => {
     try {
@@ -135,21 +166,15 @@ export default function ProductManagementPage() {
   };
 
   // TO Get Product DATA for Dashboard
-
   const productData = async (userId?: string) => {
     const currentUserId = userId || userID;
-    console.log("userID*************: ", currentUserId);
-
-    // if (!currentUserId) {
-    //   console.error("User ID is undefined. Cannot fetch products.");
-    //   return;
-    // }
+    // console.log("userID*************: ", currentUserId);
 
     try {
       const response = await fetch(`/api/admin/products?userID=${userID}`, {
         method: "GET",
       });
-      console.log("GET response ***********", response);
+      // console.log("GET response ***********", response);
 
       if (response) {
         const data = await response.json();
@@ -215,6 +240,7 @@ export default function ProductManagementPage() {
         resetForm();
         setShowPopupCreateNewProduct(false);
         productData();
+        createTrlLevels(data.product._id, trlDetials);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -224,15 +250,85 @@ export default function ProductManagementPage() {
     }
   };
 
+  // // Create TRL Levels
+  // const createTrlLevels = async (productID: string, trlDetials: any[]) => {
+  //   console.log("productID****", productID);
+  //   console.log("userID****", userID);
+
+  //   trlDetials.map(async (trl: any) => {
+  //     const trlLevelId = trl._id;
+
+  //     const createTrlLevels = async (productID: string, trlDetails: any[]) => {
+  //       console.log("productID****", productID);
+  //       console.log("userID****", userID);
+
+  //       trlDetails.forEach((trl: any) => {
+  //         const trlLevelId = trl._id; // TRL level ID
+
+  //         trl.subLevels.forEach((subLevel: any) => {
+  //           const payload = {
+  //             userID: userID,
+  //             productId: productID,
+  //             trlLevelId: trlLevelId, // Assign TRL level _id
+  //             subLevelNameId: subLevel._id, // Assign sub-level _id
+  //             description: "",
+  //             status: "to do",
+  //             documentationLink: "",
+  //             otherNotes: "",
+  //             demoRequired: false,
+  //             demoStatus: "pending",
+  //             startDate: "",
+  //             estimatedDate: "",
+  //             extendedDate: "",
+  //           };
+
+  //           console.log("Payload****", payload);
+  //         });
+  //       });
+  //     };
+
+  //     console.log("payload****", payload);
+  //   });
+  // };
+  const createTrlLevels = async (productID: string, trlDetails: any[]) => {
+    console.log("productID****", productID);
+    console.log("userID****", userID);
+  
+    trlDetails.forEach((trl: any) => {
+      const trlLevelId = trl._id; // TRL level ID
+  
+      trl.subLevels.forEach((subLevel: any) => {
+        const payload = {
+          userID: userID,
+          productId: productID,
+          trlLevelId: trlLevelId, // Assign TRL level _id
+          subLevelNameId: subLevel._id, // Assign sub-level _id
+          description: "",
+          status: "to do",
+          documentationLink: "",
+          otherNotes: "",
+          demoRequired: false,
+          demoStatus: "pending",
+          startDate: "",
+          estimatedDate: "",
+          extendedDate: "",
+        };
+  
+        console.log("Payload****", payload);
+      });
+    });
+  };
+  
+
   // Delete User Click
   const handleDeleteClick = (productID: string) => {
     setSelectedProductID(productID);
     setShowPopupDelete(true);
   };
 
-  // // Delete User detials in the Data Base!
-  const handleDeleteUser = async (productID: string) => {
-    // if (!window.confirm("Are you sure you want to delete this user?")) return;
+  // // Delete Product detials in the Data Base!
+  const handleDeleteProduct = async (productID: string) => {
+    // if (!window.confirm("Are you sure you want to delete this Product?")) return;
 
     try {
       const response = await fetch("/api/admin/products", {
@@ -242,17 +338,17 @@ export default function ProductManagementPage() {
       });
 
       if (response.ok) {
-        // alert("User deleted successfully!");
-        notify("User deleted successfully!", "success");
+        // alert("Product deleted successfully!");
+        notify("Product deleted successfully!", "success");
         productData();
 
-        // setProductDetails(productDetails.filter((product) => product._id !== userId)); // Remove user from state
+        // setProductDetails(productDetails.filter((product) => product._id !== ProductId)); // Remove Product from state
       } else {
-        // alert("Failed to delete user.");
-        notify("Failed to delete user.", "error");
+        // alert("Failed to delete Product.");
+        notify("Failed to delete Product.", "error");
       }
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Error deleting Product:", error);
       // alert("Something went wrong. Please try again.");
       notify("Something went wrong. Please try again.", "error");
     }
@@ -361,7 +457,9 @@ export default function ProductManagementPage() {
               Product Management
             </h2>
             <button
-              onClick={() => setShowPopupCreateNewProduct(true)}
+              onClick={() => {
+                setShowPopupCreateNewProduct(true), trlMasterData();
+              }}
               className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary2"
             >
               Create New Product
@@ -602,7 +700,7 @@ export default function ProductManagementPage() {
                 <button
                   onClick={async () => {
                     if (selectedProductID) {
-                      await handleDeleteUser(selectedProductID);
+                      await handleDeleteProduct(selectedProductID);
                     }
                     setShowPopupDelete(false);
                     setSelectedProductID(null);

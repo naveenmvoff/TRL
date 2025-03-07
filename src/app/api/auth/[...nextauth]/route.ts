@@ -35,10 +35,10 @@ const handler = NextAuth({
         }
 
         try {
-          console.log("checking user");
+          // console.log("checking user");
           await connectDB();
           const user = await User.findOne({ email: credentials.email });
-          console.log("User Data", user);
+          // console.log("User Data", user);
           if (!user) {
             return null;
           }
@@ -75,8 +75,8 @@ const handler = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log("USER BEFORE: ", user);
-      console.log("IN THE FOLDER,TOKEN BEFORE ASSIGNMENT: ", token);
+      // console.log("USER BEFORE: ", user);
+      // console.log("IN THE FOLDER,TOKEN BEFORE ASSIGNMENT: ", token);
 
       if (user) {
         token.id = user.id as string;
@@ -85,9 +85,9 @@ const handler = NextAuth({
         token.role = user.role;
         token.factory = user.factory;
       }
-      console.log("TOKEN AFTER ASSIGNMENT: ", token);
-      console.log("USER AFTER : ", user);
-      console.log("this.Session in JWT: ", this.session);
+      // console.log("TOKEN AFTER ASSIGNMENT: ", token);
+      // console.log("USER AFTER : ", user);
+      // console.log("this.Session in JWT: ", this.session);
 
       return token;
     },
