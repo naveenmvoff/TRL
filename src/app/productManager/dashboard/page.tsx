@@ -138,7 +138,6 @@ export default function productManager() {
             userName={Session?.user?.name || ""}
             email={Session?.user?.email || ""}
             factoryNumber={Session?.user?.factory || "Not assigned"}
-            // productsData={productData || []}  // Provide empty array as fallback
             productsData={productData?.products || []}
           />
         </div>

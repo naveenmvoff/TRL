@@ -13,18 +13,18 @@ const TrlLevelSchema = new mongoose.Schema({
   },
   trlLevelId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "trlMasterSchema",
+    ref: "TRL",
     required: true,
   },
   subLevelId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "trlMasterSchema",
+    ref: "TRL",
     required: true,
   },
   description: { type: String, default: "" },
   status: {
     type: String,
-    enum: ["completed", "progress", "pending"],
+    enum: ["completed", "progress", "pending", "to do"],
     default: "to do",
   },
   documentationLink: { type: String, default: "" },
@@ -41,6 +41,6 @@ const TrlLevelSchema = new mongoose.Schema({
 });
 
 const TrlLevelData =
-  mongoose.models.Level || mongoose.model("Level", TrlLevelSchema);
+  mongoose.models.LevelData || mongoose.model("LevelData", TrlLevelSchema);
 
 export default TrlLevelData;

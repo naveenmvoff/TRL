@@ -12,6 +12,8 @@ import { error } from "console";
 import { connectDB } from "@/lib/mongodb";
 // import CreateNewProductComp from "@/components/admin-createnewproduct/admin";
 import TRL from "@/models/trlMasterSchema";
+import { NextRequest } from "next/server";
+import TrlLevelData from "@/models/trlLevelData";
 
 interface User {
   _id: string;
@@ -195,7 +197,6 @@ export default function ProductManagementPage() {
 
     if (
       !productName ||
-      // !selectedManagerID ||
       !description ||
       !problemStatement ||
       !solutionExpected
@@ -250,59 +251,19 @@ export default function ProductManagementPage() {
     }
   };
 
-  // // Create TRL Levels
-  // const createTrlLevels = async (productID: string, trlDetials: any[]) => {
-  //   console.log("productID****", productID);
-  //   console.log("userID****", userID);
+  // // ====================Create TRL Levels - Step By Step=====================================
 
-  //   trlDetials.map(async (trl: any) => {
-  //     const trlLevelId = trl._id;
 
-  //     const createTrlLevels = async (productID: string, trlDetails: any[]) => {
-  //       console.log("productID****", productID);
-  //       console.log("userID****", userID);
-
-  //       trlDetails.forEach((trl: any) => {
-  //         const trlLevelId = trl._id; // TRL level ID
-
-  //         trl.subLevels.forEach((subLevel: any) => {
-  //           const payload = {
-  //             userID: userID,
-  //             productId: productID,
-  //             trlLevelId: trlLevelId, // Assign TRL level _id
-  //             subLevelNameId: subLevel._id, // Assign sub-level _id
-  //             description: "",
-  //             status: "to do",
-  //             documentationLink: "",
-  //             otherNotes: "",
-  //             demoRequired: false,
-  //             demoStatus: "pending",
-  //             startDate: "",
-  //             estimatedDate: "",
-  //             extendedDate: "",
-  //           };
-
-  //           console.log("Payload****", payload);
-  //         });
-  //       });
-  //     };
-
-  //     console.log("payload****", payload);
-  //   });
-  // };
   const createTrlLevels = async (productID: string, trlDetails: any[]) => {
-    console.log("productID****", productID);
-    console.log("userID****", userID);
-  
-    trlDetails.forEach((trl: any) => {
-      const trlLevelId = trl._id; // TRL level ID
-  
-      trl.subLevels.forEach((subLevel: any) => {
+    for (const trl of trlDetails) {
+      const trlLevelID = trl._id;
+
+      for (const subLevel of trl.subLevels) {
         const payload = {
           userID: userID,
           productId: productID,
-          trlLevelId: trlLevelId, // Assign TRL level _id
-          subLevelNameId: subLevel._id, // Assign sub-level _id
+          trlLevelId: trlLevelID, // Assign TRL level _id
+          subLevelId: subLevel._id, // Assign sub-level _id
           description: "",
           status: "to do",
           documentationLink: "",
@@ -313,12 +274,34 @@ export default function ProductManagementPage() {
           estimatedDate: "",
           extendedDate: "",
         };
-  
+        
         console.log("Payload****", payload);
-      });
-    });
+
+        // Send data to the API route
+        try {
+
+          const response = await fetch("/api/admin/product-trl", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to send TRL data:", response.statusText);
+          } else {
+            console.log("TRL data sent successfully");
+          }
+        } catch (error) {
+          console.error("Error sending TRL data:", error);
+        }
+      }
+    }
   };
-  
+
+
+
 
   // Delete User Click
   const handleDeleteClick = (productID: string) => {
@@ -436,11 +419,6 @@ export default function ProductManagementPage() {
     setSolutionExpected("");
   };
 
-  // console.log( {accessUsers.map((accessUsers) => ({
-  //   value: accessUsers._id,
-  //   label: `${accessUsers.name} - ${accessUsers.email}`,
-  // }))})
-
   let test = accessUsers.map((accessUsers) => ({
     value: accessUsers._id,
     label: `${accessUsers.name} - ${accessUsers.email}`,
@@ -477,37 +455,6 @@ export default function ProductManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {/* {productDetails.map((data) => {
-                    return (
-                      <tr key={data._id} className="text-sm text-black">
-                        <td className="pl-4 py-3 whitespace-nowrap text-left">
-                          {data.product}
-                        </td>
-                  
-
-                        <td className="pl-1 py-3 whitespace-nowrap text-left">
-                          {managers.find((i) => i._id === data.productManagerID)
-                            ?.name || "PM not assigned!"}
-                        </td>
-
-                        <td className="pl-1 py-3 whitespace-nowrap text-left">
-                          <button
-                            onClick={() => handleEditClick(data._id)}
-                            className="text-primary hover:underline mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(data._id)}
-                            className="text-red1 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })} */}
-
                   {(Array.isArray(productDetails) ? productDetails : []).map(
                     (data) => {
                       return (

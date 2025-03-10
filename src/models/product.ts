@@ -12,7 +12,7 @@ const ProductSchema = new mongoose.Schema(
       // type: String,
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
     },
     productViewer: {
       type: [mongoose.Schema.Types.ObjectId],

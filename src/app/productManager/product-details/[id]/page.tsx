@@ -7,15 +7,26 @@ import Sidebar from "@/components/sidebar-pm";
 
 import { useParams } from "next/navigation";
 import { ObjectId } from "mongoose";
+import { connect } from "http2";
+import { NextRequest, NextResponse } from "next/server";
+import TrlLevelData from "@/models/trlLevelData";
 
 interface TRLItem {
-  id: number;
-  level: number;
-  maturityLevel: string;
-  startDate: string;
-  estimatedDate: string;
-  extendedDate?: string;
-  status: "Completed" | "In Progress" | "Pending";
+  _id: string;
+
+  // userId: ObjectId;
+  // productId: ObjectId;
+  // trlLevelId: ObjectId;
+  // subLevelId: ObjectId;
+  // description: string;
+  // status: string;
+  // documentationLink: string;
+  // otherNotes: string;
+  // demoRequired: boolean;
+  // demoStatus: string;
+  // startDate: string;
+  // estimatedDate: string;
+  // extendedDate: string;
 }
 
 interface ProductDetails {
@@ -29,23 +40,8 @@ interface ProductDetails {
 }
 
 export default function ProductDetails() {
-  const [trlItems, setTrlItems] = useState<TRLItem[]>([
-    // {
-    //   id: 1,
-    //   level: 1,
-    //   maturityLevel: "Research & Exploration",
-    //   startDate: "2025-01-10",
-    //   estimatedDate: "2025-02-10",
-    //   status: "Completed",
-    // }
-
-  ]);
-
-  const trlItemsArray = trlItems.map((item) => ({
-    /////////////////////////////////////////////////////////////////////////// TO BE CONTINUED
-  }))
-  // const [trlItems, setTrlItems] = useState([]);
-  console.log("trlItems   ********: ", trlItems);
+  const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
+  console.log("TRL Items: ", trlItems);
 
   const completedItems = trlItems.filter(
     (item) => item.status === "Completed"
@@ -58,14 +54,11 @@ export default function ProductDetails() {
     null
   );
 
-  console.log("TRL ITEMS: ", trlItems);
-  // console.log("productDetails******** : ", productDetails);
-
   const params = useParams();
   const id = params.id as string;
-  // console.log("Product ID: ", id);
+  console.log("Product ID: ", id);
 
-  // // =============GET PRODUCT DETAILS===============
+  // // =============GET PRODUCT DETAILS ONLY ===============
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) return;
@@ -83,28 +76,80 @@ export default function ProductDetails() {
     fetchProductDetails();
   }, [id]);
 
-  // // =============GET TRL LEVEL DETAILS===============
+  // // =============GET TRL MASTER DETAILS from TRL MASTER Schema===============
+
   useEffect(() => {
-    const fetchTrlDetails = async () => {
+    const trlMasterData = async () => {
+      console.log("Inside TRL Master Data");
+
       try {
         const response = await fetch("/api/trl");
+        console.log("ItrlMD - Got responce");
         const data = await response.json();
         console.log("TRL Master Data=====", data);
-
         if (data.success) {
-          // Update your state with the TRL data
-          console.log("TRL Master Data of Data=====", data);
-          setTrlItems(data.data);
+          setTrlItems(data.data.map((item: any) => ({
+            _id: item._id,
+            TrlLevelNumber: item.trlLevelNumber, /////////////// Work on this -- continue from here
+
+
+          })));
         } else {
           console.error("Failed to fetch TRL details:", data.error);
         }
+      } catch (error) {
+        console.log("Unable to GET TRL Details", error);
+        return Response.json(
+          {
+            success: false,
+            error: "Failed to fetch TRL details",
+          },
+          { status: 500 }
+        );
+      }
+    };
+    trlMasterData();
+  },[id]);
+
+  // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
+  useEffect(() => {
+    const fetchTrlDetails = async () => {
+      if (!id) return;
+
+      try {
+        const response = await fetch(`/api/trl-level?productId=${id}`);
+        const data = await response.json();
+        // console.log("TRL Details : ", data.data);
+
+        // if (data.success) {
+
+        //   setTrlItems(data.data.map((item: any) => ({
+        //     _id: item._id,
+        //     userId: item.userId,
+        //     productId: item.productId,
+        //     trlLevelId: item.trlLevelId,
+        //     subLevelId: item.subLevelId,
+        //     description: item.description,
+        //     status: item.status,
+        //     documentationLink: item.documentationLink,
+        //     otherNotes: item.otherNotes,
+        //     demoRequired: item.demoRequired,
+        //     demoStatus: item.demoStatus,
+        //     startDate: item.startDate,
+        //     estimatedDate: item.estimatedDate,
+        //     extendedDate: item.extendedDate,
+        //     // status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
+        //   })));
+        // } else {
+        //   console.error("Failed to fetch TRL details:", data.error);
+        // }
       } catch (error) {
         console.error("Error fetching TRL details:", error);
       }
     };
 
     fetchTrlDetails();
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, [id]);
 
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
