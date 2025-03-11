@@ -116,8 +116,7 @@ export default function productManager() {
           `/api/product-manager/pm?id=${Session.user.id}`
         );
         const data = await response.json();
-        console.log("PM DATA=====", data);
-        setProductData(data);
+        setProductData(data); // Here the data is stored in state
       }
     };
 

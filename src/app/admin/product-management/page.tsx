@@ -124,7 +124,7 @@ export default function ProductManagementPage() {
   //====== Fetch the TRL Master Data ======
 
   const trlMasterData = async () => {
-    console.log("Inside TRL Master Data");
+    console.log("Inside TRL Master Data - Admin");
 
     try {
       const response = await fetch("/api/trl");
