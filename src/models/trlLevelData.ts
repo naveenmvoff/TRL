@@ -22,6 +22,7 @@ const TrlLevelSchema = new mongoose.Schema({
     required: true,
   },
   description: { type: String, default: "" },
+  currentUpdate: { type: String, default: "" },
   status: {
     type: String,
     enum: ["completed", "progress", "pending", "to do"],

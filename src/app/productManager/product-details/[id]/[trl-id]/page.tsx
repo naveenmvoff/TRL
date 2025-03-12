@@ -2,83 +2,240 @@
 import { Pencil, FileText } from "lucide-react";
 import NavBar from "@/components/navbar/navbar";
 import SideBar from "@/components/sidebar-pm";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { ObjectId } from "mongoose";
+import Select from "react-select";
+
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 
 interface TRLItem {
+  trlLevelId: string | undefined;
+  productId: string | undefined;
+  _id: string | undefined;
   id: string;
+  subLevelId?: string;
   segregation: string;
   description: string;
-  currentUpdated: string;
+  currentUpdate: string;
   status: "Completed" | "In Progress" | "Pending";
+  documentationLink?: string;
+  otherNotes?: string;
+  demoRequired?: boolean;
+  demoStatus?: string;
+  startDate?: Date;
+  estimatedDate?: Date;
+  extendedDate?: Date;
 }
 
+interface FormDataValue {
+  _id?: string;
+  productId?: string;
+  trlLevelId?: string;
+  subLevelId?: string;
+  description: string;
+  currentUpdate: string;
+  documentationLink: string;
+  otherNotes: string;
+  demoRequired: boolean;
+  demoStatus: string;
+  status: string;
+  startDate: Date | null;
+  estimatedDate: Date | null;
+  extendedDate: Date | null;
+}
 export default function ProductManager() {
   const params = useParams();
-  const trlItems: TRLItem[] = [
-    {
-      id: "1",
-      segregation: "Objectives and Goals",
-      description: "Objectives and Goals",
-      currentUpdated: "Objectives and Goals",
-      status: "Completed",
-    },
-    {
-      id: "2",
-      segregation: "Research Findings",
-      description: "Research Findings",
-      currentUpdated: "Research Findings",
-      status: "Completed",
-    },
-    {
-      id: "3",
-      segregation: "Market Analysis",
-      description: "Market Analysis",
-      currentUpdated: "Market Analysis",
-      status: "Completed",
-    },
-    {
-      id: "4",
-      segregation: "Problem Identification",
-      description: "Problem Identification",
-      currentUpdated: "Problem Identification",
-      status: "Completed",
-    },
-    {
-      id: "5",
-      segregation: "Technical Boundaries",
-      description: "Technical Boundaries",
-      currentUpdated: "Technical Boundaries",
-      status: "Completed",
-    },
-    {
-      id: "6",
-      segregation: "Concept Development",
-      description: "Concept Development",
-      currentUpdated: "Concept Development",
-      status: "Completed",
-    },
-    {
-      id: "7",
-      segregation: "Stakeholder Engagement",
-      description: "Stakeholder Engagement",
-      currentUpdated: "Stakeholder Engagement",
-      status: "Completed",
-    },
-    {
-      id: "8",
-      segregation: "Next Steps",
-      description: "Next Steps",
-      currentUpdated: "Next Steps",
-      status: "In Progress",
-    },
-    {
-      id: "9",
-      segregation: "Challenges and Barriers",
-      description: "Enter Description",
-      currentUpdated: "Enter Progress Level",
-      status: "Pending",
-    },
-  ];
+  const searchParams = useSearchParams();
+  const trlLevelName = searchParams.get("name");
+  const trlLevelNumber = searchParams.get("level");
+  const trlId = params["trl-id"] as string; // Add this line to get trl-id
+  const subLevelsParam = searchParams.get("subLevels");
+  const subLevels = subLevelsParam
+    ? JSON.parse(decodeURIComponent(subLevelsParam))
+    : [];
+  const [trlLevelContent, setTrlLevelContent] = useState<TRLItem[]>([]);
+  const [showPopupEdit, setShowPopupEdit] = useState(false);
+  const [showPopupView, setShowPopupView] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<TRLItem | null>(null);
+  const [formData, setFormData] = useState<FormDataValue | null>(null);
+  console.log("formData", formData);
+
+  const paramsing = useParams();
+  const id = paramsing.id as string;
+
+  // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
+  useEffect(() => {
+    const fetchTrlDetails = async () => {
+      if (!id) return;
+
+      try {
+        const response = await fetch(`/api/trl-level?productId=${id}`);
+        const data = await response.json();
+        console.log("TRL Details : ", data.data);
+
+        if (data.success) {
+          setTrlLevelContent(
+            data.data.map((item: any) => ({
+              _id: item._id,
+              userId: item.userId,
+              productId: item.productId,
+              trlLevelId: item.trlLevelId,
+              subLevelId: item.subLevelId,
+              description: item.description,
+              currentUpdate: item.currentUpdate,
+              status: item.status,
+              documentationLink: item.documentationLink,
+              otherNotes: item.otherNotes,
+              demoRequired: item.demoRequired,
+              demoStatus: item.demoStatus,
+              startDate: item.startDate,
+              estimatedDate: item.estimatedDate,
+              extendedDate: item.extendedDate,
+              // status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
+            }))
+          );
+        } else {
+          console.error("Failed to fetch TRL details:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching TRL details:", error);
+      }
+    };
+
+    fetchTrlDetails();
+  }, [id]);
+
+  // Filter trlLevelContent based on trlId
+  const filteredContent = trlLevelContent.filter(
+    (item: any) => item.trlLevelId === trlId
+  );
+
+  console.log("Filtered TRL Content:", filteredContent);
+
+  // Combine subLevels with trlLevelContent
+  const combinedTrlItems = subLevels.map((subLevel: any) => {
+    // Find matching content from trlLevelContent
+    const matchingContent = trlLevelContent.find(
+      (content: any) => content.subLevelId === subLevel._id
+    );
+    // console.log("Matching Content:", matchingContent);
+
+    return {
+      id: subLevel._id,
+      segregation: subLevel.subLevelName,
+      description: matchingContent?.description || "-",
+      currentUpdated: matchingContent?.currentUpdate || "-",
+      status: matchingContent?.status || "Pending",
+      documentationLink: matchingContent?.documentationLink,
+      otherNotes: matchingContent?.otherNotes,
+      demoRequired: matchingContent?.demoRequired,
+      demoStatus: matchingContent?.demoStatus,
+    };
+  });
+
+  const handleEdit = (item: TRLItem) => {
+    // Find matching content from filteredContent
+    const matchingContent = filteredContent.find(
+      (content) => content.subLevelId === item.id
+    );
+
+    if (matchingContent) {
+      setSelectedItem(item);
+      setFormData({
+        _id: matchingContent._id,
+        productId: matchingContent.productId,
+        trlLevelId: matchingContent.trlLevelId,
+        subLevelId: matchingContent.subLevelId,
+        description: matchingContent.description || "",
+        currentUpdate: matchingContent.currentUpdate || "",
+        documentationLink: matchingContent.documentationLink || "",
+        otherNotes: matchingContent.otherNotes || "",
+        demoRequired: matchingContent.demoRequired || false,
+        demoStatus: matchingContent.demoStatus || "pending",
+        status: matchingContent.status || "to do",
+        startDate: matchingContent.startDate
+          ? new Date(matchingContent.startDate)
+          : null,
+        estimatedDate: matchingContent.estimatedDate
+          ? new Date(matchingContent.estimatedDate)
+          : null,
+        extendedDate: matchingContent.extendedDate
+          ? new Date(matchingContent.extendedDate)
+          : null,
+      });
+    }
+    setShowPopupEdit(true);
+  };
+
+  const handleView = (item: TRLItem) => {
+    const matchingContent = filteredContent.find(
+      (content) => content.subLevelId === item.id
+    );
+
+    if (matchingContent) {
+      setSelectedItem(item);
+      setFormData({
+        _id: matchingContent._id,
+        productId: matchingContent.productId,
+        trlLevelId: matchingContent.trlLevelId,
+        subLevelId: matchingContent.subLevelId,
+        description: matchingContent.description || "",
+        currentUpdate: matchingContent.currentUpdate || "",
+        documentationLink: matchingContent.documentationLink || "",
+        otherNotes: matchingContent.otherNotes || "",
+        demoRequired: matchingContent.demoRequired || false,
+        demoStatus: matchingContent.demoStatus || "pending",
+        status: matchingContent.status || "to do",
+        startDate: matchingContent.startDate
+          ? new Date(matchingContent.startDate)
+          : null,
+        estimatedDate: matchingContent.estimatedDate
+          ? new Date(matchingContent.estimatedDate)
+          : null,
+        extendedDate: matchingContent.extendedDate
+          ? new Date(matchingContent.extendedDate)
+          : null,
+      });
+    }
+    setShowPopupView(true);
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!formData) return;
+
+    try {
+      console.log("formData recived!", formData);
+      const response = await fetch(`/api/trl-level/${formData._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          description: formData.description,
+          currentUpdate: formData.currentUpdate,
+          documentationLink: formData.documentationLink,
+          otherNotes: formData.otherNotes,
+          demoRequired: formData.demoRequired,
+          demoStatus: formData.demoStatus,
+          status: formData.status,
+          startDate: formData.startDate,
+          estimatedDate: formData.estimatedDate,
+          extendedDate: formData.extendedDate,
+        }),
+      });
+
+      if (response.ok) {
+        setShowPopupEdit(false);
+        // Refresh the data
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error updating TRL data:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -97,7 +254,7 @@ export default function ProductManager() {
                   Product Details
                 </h2>
                 <h3 className="text-lg font-medium text-gray-700 mt-2">
-                  TRL 1 - Research & Exploration
+                  TRL {trlLevelNumber} - {trlLevelName}
                 </h3>
               </div>
 
@@ -118,22 +275,32 @@ export default function ProductManager() {
                         STATUS
                       </th>
                       <th className="py-3 px-6 text-left font-medium">
-                        EDIT/VIEW
+                        ACTIONS
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trlItems.map((item) => (
-                      <tr key={item.id} className="border-b">
-                        <td className="py-4 px-6">{item.segregation}</td>
-                        <td className="py-4 px-6">{item.description}</td>
-                        <td className="py-4 px-6">{item.currentUpdated}</td>
-                        <td className="py-4 px-6">
+                    {combinedTrlItems.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-b cursor-pointer hover:bg-gray-300"
+                        onClick={() => handleView(item)}
+                      >
+                        <td className="py-4 px-6 text-black">
+                          {item.segregation}
+                        </td>
+                        <td className="py-4 px-6 text-black">
+                          {item.description}
+                        </td>
+                        <td className="py-4 px-6 text-black">
+                          {item.currentUpdated}
+                        </td>
+                        <td className="py-4 px-6 text-black">
                           <span
                             className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
-                              item.status === "Completed"
+                              item.status === "completed"
                                 ? "bg-green-100 text-green-800"
-                                : item.status === "In Progress"
+                                : item.status === "progress"
                                 ? "bg-blue-100 text-blue-800"
                                 : "bg-gray-100 text-gray-800"
                             }`}
@@ -143,22 +310,426 @@ export default function ProductManager() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex space-x-2">
-                            <button className="text-[#5D4FEF]">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // This prevents the click from bubbling up to the row
+                                handleEdit(item);
+                              }}
+                              className="text-[#5D4FEF]"
+                            >
                               <Pencil size={18} />
-                            </button>
-                            <button className="text-[#5D4FEF]">
-                              <FileText size={18} />
                             </button>
                           </div>
                         </td>
                       </tr>
                     ))}
+                    {combinedTrlItems.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="py-4 text-center text-gray-500"
+                        >
+                          No data available for this TRL level
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           </main>
         </div>
+
+        {showPopupEdit && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center rounded-lg">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[100vh] overflow-hidden">
+              {/* <div className="max-h-[90vh] overflow-y-auto "> */}
+              <div className="max-h-[90vh] overflow-y-auto ">
+                <div className="flex flex-row justify-between items-start sticky top-0 bg-white  overflow-y-auto">
+                  <h3 className="text-lg items-start font-semibold text-black">
+                    {selectedItem?.segregation || "TRL SEGREGATION"}
+                  </h3>
+
+                  <p
+                    onClick={() => setShowPopupEdit(false)}
+                    className="text-lg font-semibold text-red1 hover:text-black hover:font-bold"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-7"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </p>
+                </div>
+                <div className="space-y">
+                  <div className="flex flex-row gap-4 justify-between">
+                    <div className="w-1/2 flex flex-col">
+                      <p className="text-md font-regular text-black mt-2">
+                        Description
+                      </p>
+                      <textarea
+                        value={formData?.description || ""}
+                        onChange={(e) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  description: e.target.value,
+                                }
+                              : null
+                          )
+                        }
+                        placeholder="Enter the Description of the Stage"
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        rows={4}
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Current Update
+                      </p>
+                      <textarea
+                        value={formData?.currentUpdate || ""}
+                        onChange={(e) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  currentUpdate: e.target.value,
+                                }
+                              : null
+                          )
+                        }
+                        placeholder="Enter the Current Update of the Stage"
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        rows={4}
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Demo Required
+                      </p>
+
+                      <Select
+                        options={[
+                          { value: true, label: "Yes" },
+                          { value: false, label: "No" },
+                        ]}
+                        value={{
+                          value: formData?.demoRequired || false,
+                          label: formData?.demoRequired ? "Yes" : "No",
+                        }}
+                        onChange={(e: any) =>
+                          formData &&
+                          setFormData({
+                            ...formData,
+                            demoRequired: e.value,
+                            description: formData.description,
+                            currentUpdate: formData.currentUpdate,
+                            documentationLink: formData.documentationLink,
+                            otherNotes: formData.otherNotes,
+                            demoStatus: formData.demoStatus,
+                            status: formData.status,
+                          })
+                        }
+                        className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        If Yes, Demo Status
+                      </p>
+
+                      <Select
+                        options={[
+                          { value: "completed", label: "completed" },
+                          { value: "pending", label: "pending" },
+                        ]}
+                        value={{
+                          value: formData?.demoStatus || "",
+                          label: formData?.demoStatus || "",
+                        }}
+                        onChange={(e: any) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  demoStatus: e.value,
+                                  description: formData.description,
+                                  currentUpdate: formData.currentUpdate,
+                                  documentationLink: formData.documentationLink,
+                                  otherNotes: formData.otherNotes,
+                                  demoRequired: formData.demoRequired,
+                                  status: formData.status,
+                                }
+                              : null
+                          )
+                        }
+                        className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                      />
+                    </div>
+
+                    <div className="w-1/2 flex flex-col">
+                      <p className="text-md font-regular text-black mt-2">
+                        Documentation Link
+                      </p>
+                      <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  documentationLink: e.target.value,
+                                }
+                              : null
+                          )
+                        }
+                        placeholder="Provide the Document Link"
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        rows={1}
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Any Others Notes
+                      </p>
+                      <textarea
+                        value={formData?.otherNotes || ""}
+                        onChange={(e) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  otherNotes: e.target.value,
+                                }
+                              : null
+                          )
+                        }
+                        placeholder="Enter any other notes"
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        rows={4}
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Start Date
+                      </p>
+                      <DatePicker
+                        selected={formData?.startDate || null}
+                        onChange={(date: Date | null) =>
+                          formData &&
+                          setFormData({ ...formData, startDate: date })
+                        }
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Select start date"
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Estimated Date
+                      </p>
+                      <DatePicker
+                        selected={formData?.estimatedDate || null}
+                        onChange={(date: Date | null) =>
+                          formData &&
+                          setFormData({ ...formData, estimatedDate: date })
+                        }
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Select estimated date"
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Extended Date
+                      </p>
+                      <DatePicker
+                        selected={formData?.extendedDate || null}
+                        onChange={(date: Date | null) =>
+                          formData &&
+                          setFormData({ ...formData, extendedDate: date })
+                        }
+                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Select extended date"
+                      />
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Status
+                      </p>
+
+                      <Select
+                        options={[
+                          { value: "Completed", label: "Completed" },
+                          { value: "In Progress", label: "In Progress" },
+                          { value: "Pending", label: "Pending" },
+                        ]}
+                        value={{
+                          value: formData?.status || "",
+                          label: formData?.status || "",
+                        }}
+                        onChange={(e: any) =>
+                          formData &&
+                          setFormData({
+                            ...formData,
+                            description: formData.description,
+                            currentUpdate: formData.currentUpdate,
+                            documentationLink: formData.documentationLink,
+                            otherNotes: formData.otherNotes,
+                            demoRequired: formData.demoRequired,
+                            demoStatus: formData.demoStatus,
+                            status: e.value,
+                          })
+                        }
+                        className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-4">
+                    <button
+                      onClick={() => setShowPopupEdit(false)}
+                      className="px-4 py-2 bg-red1 rounded-md hover:bg-red2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitEdit}
+                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary2"
+                    >
+                      Update
+                    </button>
+                    ;
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPopupView && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center rounded-lg">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[100vh] overflow-hidden">
+              <div className="max-h-[90vh] overflow-y-auto ">
+                <div className="flex flex-row justify-between items-start sticky top-0 bg-white  overflow-y-auto">
+                  <h3 className="text-lg items-start font-semibold text-black">
+                    {selectedItem?.segregation || "TRL SEGREGATION"}
+                  </h3>
+
+                  <p
+                    onClick={() => setShowPopupView(false)}
+                    className="text-lg font-semibold text-red1 hover:text-black hover:font-bold"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-7"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </p>
+                </div>
+                <div className="space-y">
+                  <div className="flex flex-row gap-4 justify-between">
+                    <div className="w-1/2 flex flex-col">
+                      <p className="text-md font-regular text-black mt-2">
+                        Description
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.description || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Current Update
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.currentUpdate || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Demo Required
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.demoRequired ? "Yes" : "No"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Demo Status
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.demoStatus || "-"}
+                      </p>
+                    </div>
+
+                    <div className="w-1/2 flex flex-col">
+                      <p className="text-md font-regular text-black mt-2">
+                        Documentation Link
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.documentationLink || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Other Notes
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.otherNotes || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Start Date
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.startDate?.toLocaleDateString() || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Estimated Date
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.estimatedDate?.toLocaleDateString() || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Extended Date
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.extendedDate?.toLocaleDateString() || "-"}
+                      </p>
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Status
+                      </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.status || "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-4">
+                    <button
+                      onClick={() => setShowPopupView(false)}
+                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary2"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

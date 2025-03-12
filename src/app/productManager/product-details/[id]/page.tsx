@@ -15,10 +15,12 @@ interface TRLItem {
   _id: string;
   TrlLevelNumber?: number;
   trlLevelName?: string;
-  // startDate?: string;
-  // estimatedDate?: string;
-  // extendedDate?: string;
   status: string;
+  subLevels?: {
+    subLevelName: string;
+    subLevelNumber: number;
+    _id: string;
+  }[];
 }
 
 interface ProductDetails {
@@ -34,7 +36,7 @@ interface ProductDetails {
 export default function ProductDetails() {
   const router = useRouter();
   const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
-  console.log("TRL Items: ", trlItems);
+  console.log("TRL Master Items: ", trlItems);
 
   const completedItems = trlItems.filter(
     (item) => item.status === "Completed"
@@ -88,6 +90,8 @@ export default function ProductDetails() {
               _id: item._id,
               TrlLevelNumber: item.trlLevelNumber,
               trlLevelName: item.trlLevelName,
+              subLevels: item.subLevels,
+              status: 'Pending' // or however you determine status
             }))
           );
         } else {
@@ -107,48 +111,48 @@ export default function ProductDetails() {
     trlMasterData();
   }, [id]);
 
-  // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
-  useEffect(() => {
-    const fetchTrlDetails = async () => {
-      if (!id) return;
+  // // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
+  // useEffect(() => {
+  //   const fetchTrlDetails = async () => {
+  //     if (!id) return;
 
-      try {
-        const response = await fetch(`/api/trl-level?productId=${id}`);
-        const data = await response.json();
-        // console.log("TRL Details : ", data.data);
+  //     try {
+  //       const response = await fetch(`/api/trl-level?productId=${id}`);
+  //       const data = await response.json();
+  //       console.log("TRL Details : ", data.data);
 
-        // if (data.success) {
+  //       // if (data.success) {
 
-        //   setTrlItems(data.data.map((item: any) => ({
-        //     _id: item._id,
-        //     userId: item.userId,
-        //     productId: item.productId,
-        //     trlLevelId: item.trlLevelId,
-        //     subLevelId: item.subLevelId,
-        //     description: item.description,
-        //     status: item.status,
-        //     documentationLink: item.documentationLink,
-        //     otherNotes: item.otherNotes,
-        //     demoRequired: item.demoRequired,
-        //     demoStatus: item.demoStatus,
-        //     startDate: item.startDate,
-        //     estimatedDate: item.estimatedDate,
-        //     extendedDate: item.extendedDate,
-        //     // status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
-        //   })));
-        // } else {
-        //   console.error("Failed to fetch TRL details:", data.error);
-        // }
-      } catch (error) {
-        console.error("Error fetching TRL details:", error);
-      }
-    };
+  //         // setTrlItems(data.data.map((item: any) => ({
+  //       //     _id: item._id,
+  //       //     userId: item.userId,
+  //       //     productId: item.productId,
+  //       //     trlLevelId: item.trlLevelId,
+  //       //     subLevelId: item.subLevelId,
+  //       //     description: item.description,
+  //       //     status: item.status,
+  //       //     documentationLink: item.documentationLink,
+  //       //     otherNotes: item.otherNotes,
+  //       //     demoRequired: item.demoRequired,
+  //       //     demoStatus: item.demoStatus,
+  //       //     startDate: item.startDate,
+  //       //     estimatedDate: item.estimatedDate,
+  //       //     extendedDate: item.extendedDate,
+  //       //     // status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
+  //       //   })));
+  //       // } else {
+  //       //   console.error("Failed to fetch TRL details:", data.error);
+  //       // }
+  //     } catch (error) {
+  //       console.error("Error fetching TRL details:", error);
+  //     }
+  //   };
 
-    fetchTrlDetails();
-  }, [id]);
+  //   fetchTrlDetails();
+  // }, [id]);
 
-  const handleTRLClick = (productId: string, trlId: string) => {
-    router.push(`/productManager/product-details/${productId}/${trlId}`);
+  const handleTRLClick = (productId: string, trlId: string, levelName: string, levelNumber: number, subLevels: any[]) => {
+    router.push(`/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(levelName)}&level=${levelNumber}&subLevels=${encodeURIComponent(JSON.stringify(subLevels))}`);
   };
 
   return (
@@ -241,7 +245,7 @@ export default function ProductDetails() {
                       {trlItems.map((item, index) => (
                         <tr
                           key={item._id}
-                          onClick={() => handleTRLClick(id, item._id)}
+                          onClick={() => handleTRLClick(id, item._id, item.trlLevelName || '', item.TrlLevelNumber || 0, item.subLevels || [])}
                           className={`${
                             index % 2 === 0 ? "bg-gray-50" : "bg-white"
                           } text-sm cursor-pointer hover:bg-gray-300 transition`}

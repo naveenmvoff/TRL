@@ -265,6 +265,7 @@ export default function ProductManagementPage() {
           trlLevelId: trlLevelID, // Assign TRL level _id
           subLevelId: subLevel._id, // Assign sub-level _id
           description: "",
+          currentUpdate:"",
           status: "to do",
           documentationLink: "",
           otherNotes: "",
