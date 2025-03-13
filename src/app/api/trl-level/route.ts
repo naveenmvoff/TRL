@@ -81,3 +81,33 @@ export async function PUT(
         );
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const url = new URL(req.url);
+        const productId = url.searchParams.get('productId');
+        
+        if (!productId) {
+            return NextResponse.json({
+                success: false,
+                error: "Product ID is required"
+            }, { status: 400 });
+        }
+
+        await connectDB();
+        const result = await TrlLevelData.deleteMany({ productId });
+        
+        return NextResponse.json({
+            success: true,
+            message: "TRL level data deleted successfully",
+            deletedCount: result.deletedCount
+        }, { status: 200 });
+
+    } catch (error) {
+        console.error("Error deleting TRL level data:", error);
+        return NextResponse.json({
+            success: false,
+            error: "Failed to delete TRL level data"
+        }, { status: 500 });
+    }
+}

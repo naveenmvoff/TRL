@@ -119,6 +119,7 @@ export async function PUT(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
+    console.log("PUT body:", body);
     const {
       productId,
       product,
@@ -128,6 +129,7 @@ export async function PUT(req: NextRequest) {
       problemStatement,
       solutionExpected,
     } = body;
+    console.log("productId", productId);
 
     if (!mongoose.isValidObjectId(productId)) {
       return NextResponse.json(

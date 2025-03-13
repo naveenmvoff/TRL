@@ -311,32 +311,37 @@ export default function ProductManagementPage() {
   };
 
   // // Delete Product detials in the Data Base!
-  const handleDeleteProduct = async (productID: string) => {
-    // if (!window.confirm("Are you sure you want to delete this Product?")) return;
-
+  const handleDeleteProduct = async (productId: string) => {
     try {
-      const response = await fetch("/api/admin/products", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productID }),
-      });
+        // First delete associated TRL level data
+        const trlResponse = await fetch(`/api/trl-level?productId=${productId}`, {
+            method: 'DELETE',
+        });
 
-      if (response.ok) {
-        // alert("Product deleted successfully!");
-        notify("Product deleted successfully!", "success");
+        if (!trlResponse.ok) {
+            notify("Failed to delete TRL level data", "error");
+            return;
+        }
+
+        // Then delete the product
+        const productResponse = await fetch(`/api/admin/products/${productId}`, {
+            method: 'DELETE',
+        });
+
+        if (!productResponse.ok) {
+            notify("Failed to delete product", "error");
+            return;
+        }
+
+        notify("Product deleted successfully", "success");
+        // Refresh the products list
         productData();
-
-        // setProductDetails(productDetails.filter((product) => product._id !== ProductId)); // Remove Product from state
-      } else {
-        // alert("Failed to delete Product.");
-        notify("Failed to delete Product.", "error");
-      }
+        
     } catch (error) {
-      console.error("Error deleting Product:", error);
-      // alert("Something went wrong. Please try again.");
-      notify("Something went wrong. Please try again.", "error");
+        console.error('Error deleting product:', error);
+        notify("Error occurred while deleting product", "error");
     }
-  };
+};
 
   const handleEditClick = (productID: string) => {
     setSelectedProductID(productID);
@@ -363,6 +368,7 @@ export default function ProductManagementPage() {
     console.log("UPDATE CLICKED ");
     console.log("selectedViewersID----IN--UPDATE", selectedViewersID);
     console.log("selectedProductID-----IN--UPDATE", selectedProductID);
+
     if (!selectedProductID) {
       console.error("Error: No product ID selected.");
       notify("Error: No product ID selected.");
@@ -372,7 +378,8 @@ export default function ProductManagementPage() {
 
     const updatedProduct = {
       userID: Session?.user.id,
-      _id: selectedProductID, // Ensure _id is sent in the request body
+      // _id: selectedProductID, // Ensure _id is sent in the request body
+      productId: selectedProductID, // Ensure _id is sent in the request body
       product: productName,
       productManagerID: selectedManagerID,
       productViewer: selectedViewersID,

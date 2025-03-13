@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-pm";
+import Expand from "@/components/expand"; // Add this import
 
 import { useParams, useRouter } from "next/navigation";
 import { ObjectId } from "mongoose";
@@ -21,6 +22,14 @@ interface TRLItem {
     subLevelNumber: number;
     _id: string;
   }[];
+  description?: string;
+  documentationLink?: string;
+  otherNotes?: string;
+  demoRequired?: boolean;
+  demoStatus?: string;
+  startDate?: string;
+  estimatedDate?: string;
+  extendedDate?: string;
 }
 
 interface ProductDetails {
@@ -49,9 +58,27 @@ export default function ProductDetails() {
     null
   );
 
+  const [selectedSection, setSelectedSection] = useState<{
+    title: string;
+    content: string | undefined;
+  } | null>(null);
+
+  const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
+
   const params = useParams();
   const id = params.id as string;
   console.log("Product ID: ", id);
+
+  // Add this helper function at the top of your component
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   // // =============GET PRODUCT DETAILS ONLY ===============
   useEffect(() => {
@@ -74,7 +101,6 @@ export default function ProductDetails() {
   }, [id]);
 
   // // =============GET TRL MASTER DETAILS from TRL MASTER Schema===============
-
   useEffect(() => {
     const trlMasterData = async () => {
       console.log("Inside TRL Master Data - PM");
@@ -91,7 +117,7 @@ export default function ProductDetails() {
               TrlLevelNumber: item.trlLevelNumber,
               trlLevelName: item.trlLevelName,
               subLevels: item.subLevels,
-              status: 'Pending' // or however you determine status
+              status: "Pending", // or however you determine status
             }))
           );
         } else {
@@ -111,56 +137,108 @@ export default function ProductDetails() {
     trlMasterData();
   }, [id]);
 
-  // // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
-  // useEffect(() => {
-  //   const fetchTrlDetails = async () => {
-  //     if (!id) return;
+  // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
+  useEffect(() => {
+    const fetchTrlDetails = async () => {
+      if (!id) return;
 
-  //     try {
-  //       const response = await fetch(`/api/trl-level?productId=${id}`);
-  //       const data = await response.json();
-  //       console.log("TRL Details : ", data.data);
+      try {
+        // First fetch master data
+        const masterResponse = await fetch("/api/trl");
+        const masterData = await masterResponse.json();
 
-  //       // if (data.success) {
+        // Then fetch level details
+        const detailsResponse = await fetch(`/api/trl-level?productId=${id}`);
+        const detailsData = await detailsResponse.json();
 
-  //         // setTrlItems(data.data.map((item: any) => ({
-  //       //     _id: item._id,
-  //       //     userId: item.userId,
-  //       //     productId: item.productId,
-  //       //     trlLevelId: item.trlLevelId,
-  //       //     subLevelId: item.subLevelId,
-  //       //     description: item.description,
-  //       //     status: item.status,
-  //       //     documentationLink: item.documentationLink,
-  //       //     otherNotes: item.otherNotes,
-  //       //     demoRequired: item.demoRequired,
-  //       //     demoStatus: item.demoStatus,
-  //       //     startDate: item.startDate,
-  //       //     estimatedDate: item.estimatedDate,
-  //       //     extendedDate: item.extendedDate,
-  //       //     // status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
-  //       //   })));
-  //       // } else {
-  //       //   console.error("Failed to fetch TRL details:", data.error);
-  //       // }
-  //     } catch (error) {
-  //       console.error("Error fetching TRL details:", error);
-  //     }
-  //   };
+        if (masterData.success && detailsData.success) {
+          // Combine the data
+          const combinedData = masterData.data.map((masterItem: any) => {
+            // Find all sublevels details for this TRL level
+            const levelDetails = detailsData.data.filter(
+              (detail: any) => detail.trlLevelId === masterItem._id
+            );
 
-  //   fetchTrlDetails();
-  // }, [id]);
+            // Sort sublevels by their number
+            const sortedSubLevels = masterItem.subLevels?.sort(
+              (a: any, b: any) => a.subLevelNumber - b.subLevelNumber
+            );
 
-  const handleTRLClick = (productId: string, trlId: string, levelName: string, levelNumber: number, subLevels: any[]) => {
-    router.push(`/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(levelName)}&level=${levelNumber}&subLevels=${encodeURIComponent(JSON.stringify(subLevels))}`);
+            // Find first sublevel details
+            const firstSubLevel = sortedSubLevels?.[0];
+            const firstSubLevelDetails = firstSubLevel
+              ? levelDetails.find((d) => d.subLevelId === firstSubLevel._id)
+              : null;
+
+            // Find last sublevel details
+            const lastSubLevel = sortedSubLevels?.[sortedSubLevels.length - 1];
+            const lastSubLevelDetails = lastSubLevel
+              ? levelDetails.find((d) => d.subLevelId === lastSubLevel._id)
+              : null;
+
+            return {
+              _id: masterItem._id,
+              TrlLevelNumber: masterItem.trlLevelNumber,
+              trlLevelName: masterItem.trlLevelName,
+              subLevels: masterItem.subLevels,
+              description: firstSubLevelDetails?.description || "",
+              status: firstSubLevelDetails?.status || "Pending",
+              documentationLink: firstSubLevelDetails?.documentationLink || "",
+              otherNotes: firstSubLevelDetails?.otherNotes || "",
+              demoRequired: firstSubLevelDetails?.demoRequired || false,
+              demoStatus: firstSubLevelDetails?.demoStatus || "",
+              // Use first sublevel's start date
+              startDate: firstSubLevelDetails?.startDate || "",
+              // Use last sublevel's estimated and extended dates
+              estimatedDate: lastSubLevelDetails?.estimatedDate || "",
+              extendedDate: lastSubLevelDetails?.extendedDate || "",
+            };
+          });
+
+          setTrlItems(combinedData);
+        }
+      } catch (error) {
+        console.error("Error fetching TRL data:", error);
+      }
+    };
+
+    fetchTrlDetails();
+  }, [id]);
+
+  const handleTRLClick = (
+    productId: string,
+    trlId: string,
+    levelName: string,
+    levelNumber: number,
+    subLevels: any[]
+  ) => {
+    router.push(
+      `/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(
+        levelName
+      )}&level=${levelNumber}&subLevels=${encodeURIComponent(
+        JSON.stringify(subLevels)
+      )}`
+    );
+  };
+
+  const handleSectionClick = (section: any) => {
+    if (!isAnyPopupOpen) {
+      setSelectedSection(section);
+      setIsAnyPopupOpen(true);
+    }
+  };
+
+  const handleExpandClose = () => {
+    setSelectedSection(null);
+    setIsAnyPopupOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-white w-full overflow-hidden">
-      <NavBar role="Product Manager" />
-      <div className="flex flex-col sm:flex-row">
+    <div className="relative min-h-screen bg-white">
+      {/* Use z-index to ensure proper stacking */}
+      <NavBar role="Product Manager" className="z-10" />
+      <div className="flex flex-col sm:flex-row relative z-0">
         <Sidebar />
-
         <div className="flex-1 flex justify-center">
           <div className="mt-5 w-full max-w-full px-4 sm:px-6 space-y-6">
             <div className="bg-white border rounded-lg p-6">
@@ -181,11 +259,17 @@ export default function ProductDetails() {
                   content: productDetails?.solutionExpected,
                 },
               ].map((section) => (
-                <div key={section.title} className="mb-4">
+                <div 
+                  key={section.title} 
+                  className={`mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors ${
+                    isAnyPopupOpen ? 'pointer-events-none opacity-50' : ''
+                  }`}
+                  onClick={() => handleSectionClick(section)}
+                >
                   <h3 className="text-base font-semibold text-gray-700">
                     {section.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-1 overflow-hidden text-ellipsis">
                     {section.content}
                   </p>
                 </div>
@@ -239,13 +323,19 @@ export default function ProductDetails() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody
-                      className="divide-y divide-gray-200 bg-white text-black"
-                    >
+                    <tbody className="divide-y divide-gray-200 bg-white text-black">
                       {trlItems.map((item, index) => (
                         <tr
                           key={item._id}
-                          onClick={() => handleTRLClick(id, item._id, item.trlLevelName || '', item.TrlLevelNumber || 0, item.subLevels || [])}
+                          onClick={() =>
+                            handleTRLClick(
+                              id,
+                              item._id,
+                              item.trlLevelName || "",
+                              item.TrlLevelNumber || 0,
+                              item.subLevels || []
+                            )
+                          }
                           className={`${
                             index % 2 === 0 ? "bg-gray-50" : "bg-white"
                           } text-sm cursor-pointer hover:bg-gray-300 transition`}
@@ -260,15 +350,18 @@ export default function ProductDetails() {
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap font-medium">
                             {item.trlLevelName}
+                            {/* <div className="text-xs text-gray-500">
+                              {item.description}
+                            </div> */}
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
-                            {item.startDate || "-"}
+                            {formatDate(item.startDate)}
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
-                            {item.estimatedDate || "-"}
+                            {formatDate(item.estimatedDate)}
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
-                            {item.extendedDate || "-"}
+                            {formatDate(item.extendedDate)}
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
                             <div className="flex items-center space-x-2">
@@ -284,6 +377,11 @@ export default function ProductDetails() {
                               <span className="text-xs font-medium">
                                 {item.status}
                               </span>
+                              {/* {item.demoRequired && (
+                                <span className="ml-2 text-xs text-blue-600">
+                                  Demo {item.demoStatus}
+                                </span>
+                              )} */}
                             </div>
                           </td>
                           {/* <td className="pl-4 py-3 whitespace-nowrap">
@@ -306,6 +404,20 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
+
+      {/* Move the Expand component here, outside the main content flow */}
+      {selectedSection && (
+        <Expand
+          title={selectedSection.title}
+          onClose={handleExpandClose}
+        >
+          <div className="mt-4 p-4">
+            <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
+              {selectedSection.content || "No content available"}
+            </p>
+          </div>
+        </Expand>
+      )}
     </div>
   );
 }
