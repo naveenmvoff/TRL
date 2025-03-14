@@ -33,7 +33,7 @@ export default function LoginForm() {
       } else if (data.role ==='Product Manager'){
         router.push('/productManager');
       } else if (data.role === 'Stakeholders'){
-        router.push('/stakeholder');
+        router.push('/stakeholder/product-overview');
       }else {
         setError('Invalid user role');
       }

@@ -35,9 +35,7 @@ export async function GET(req: NextRequest) {
       );
     }
     const products = await Product.find({ userID: userID });
-    // .populate("userID", "name email")
-    // .populate("productManagerID", "name email")
-    // .populate("productViewer", "name email");
+    
 
     console.log("GET products:", products);
 
@@ -195,45 +193,6 @@ export async function PUT(req: NextRequest) {
     console.error("PUT update product error:", error);
     return NextResponse.json(
       { success: false, message: "Product update failed" },
-      { status: 500 }
-    );
-  }
-}
-
-// Delete all Product from the database
-export async function DELETE(req: Request) {
-  try {
-    await connectDB(); // Connect to MongoDB
-
-    const deleteProduct = await req.json(); // Get user ID from the request body
-    console.log("deleteProduct", deleteProduct);
-    const { productID: productId } = deleteProduct; // Get user ID from the request body
-
-    if (!productId) {
-      return NextResponse.json(
-        { message: "product ID is required." },
-        { status: 400 }
-      );
-    }
-
-    await connectDB(); // Connect to MongoDB
-    const deletedUser = await Product.findByIdAndDelete(productId);
-
-    if (!deletedUser) {
-      return NextResponse.json(
-        { message: "product not found." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: "product deleted successfully." },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    return NextResponse.json(
-      { message: "Failed to delete product." },
       { status: 500 }
     );
   }

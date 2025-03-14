@@ -42,8 +42,16 @@ interface ProductDetails {
   solutionExpected: string;
 }
 
+const LoadingSpinner = () => (
+  <div className="flex flex-col justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
+    <h1 className="mt-4 text-lg font-semibold text-indigo-600">Loading...</h1>
+  </div>
+);
+
 export default function ProductDetails() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
   console.log("TRL Master Items: ", trlItems);
 
@@ -80,11 +88,24 @@ export default function ProductDetails() {
     });
   };
 
+  // Add this function before the component
+  const calculateOverallStatus = (levelDetails: any[]) => {
+    if (!levelDetails || levelDetails.length === 0) return "Pending";
+
+    const hasCompleted = levelDetails.some(detail => detail.status === "Completed");
+    const hasInProgress = levelDetails.some(detail => detail.status === "In Progress");
+    const allCompleted = levelDetails.every(detail => detail.status === "Completed");
+
+    if (allCompleted) return "Completed";
+    if (hasInProgress || hasCompleted) return "In Progress";
+    return "Pending";
+  };
+
   // // =============GET PRODUCT DETAILS ONLY ===============
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) return;
-
+      setIsLoading(true);
       try {
         console.log("Product ID in Request: ", id);
         const response = await fetch(`/api/product-manager/product?id=${id}`);
@@ -141,7 +162,6 @@ export default function ProductDetails() {
   useEffect(() => {
     const fetchTrlDetails = async () => {
       if (!id) return;
-
       try {
         // First fetch master data
         const masterResponse = await fetch("/api/trl");
@@ -182,7 +202,7 @@ export default function ProductDetails() {
               trlLevelName: masterItem.trlLevelName,
               subLevels: masterItem.subLevels,
               description: firstSubLevelDetails?.description || "",
-              status: firstSubLevelDetails?.status || "Pending",
+              status: calculateOverallStatus(levelDetails),
               documentationLink: firstSubLevelDetails?.documentationLink || "",
               otherNotes: firstSubLevelDetails?.otherNotes || "",
               demoRequired: firstSubLevelDetails?.demoRequired || false,
@@ -196,9 +216,11 @@ export default function ProductDetails() {
           });
 
           setTrlItems(combinedData);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching TRL data:", error);
+        setIsLoading(false);
       }
     };
 
@@ -233,13 +255,27 @@ export default function ProductDetails() {
     setIsAnyPopupOpen(false);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white w-full overflow-hidden">
+        <NavBar role="Product Manager" />
+        <div className="flex h-[calc(100vh-4rem)]">
+          <Sidebar />
+          <div className="flex-grow">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-white">
       {/* Use z-index to ensure proper stacking */}
       <NavBar role="Product Manager" className="z-10" />
       <div className="flex flex-col sm:flex-row relative z-0">
         <Sidebar />
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-center bg-secondary">
           <div className="mt-5 w-full max-w-full px-4 sm:px-6 space-y-6">
             <div className="bg-white border rounded-lg p-6">
               <h2 className="text-lg font-semibold text-primary mb-4">

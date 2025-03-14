@@ -1,4 +1,3 @@
-// // // E:\Task\TRL\trl\src\app\admin\user-management\page.tsx:
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -17,6 +16,13 @@ interface User {
   factory?: number | null;
 }
 
+const LoadingSpinner = () => (
+  <div className="flex flex-col justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
+    <h1 className="mt-4 text-lg font-semibold text-indigo-600">Loading...</h1>
+  </div>
+);
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -31,6 +37,7 @@ export default function UserManagement() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [savingUser, setsavingUser] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // // ==================User Creating person validation!=============================
   const { data: Session } = useSession();
@@ -52,6 +59,7 @@ export default function UserManagement() {
   const fetchUsers = async (userId?: string) => {
     const currentUserId = userId || userID;
     console.log("userID*************: ", currentUserId);
+    setIsLoading(true);
     try {
       const response = await fetch(`/api/admin/user-management?userID=${userID}`, {
         method: "GET",
@@ -65,6 +73,8 @@ export default function UserManagement() {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -310,12 +320,26 @@ export default function UserManagement() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white w-full overflow-hidden">
+        <NavBar role="Admin" />
+        <div className="flex h-[calc(100vh-4rem)]">
+          <Sidebar />
+          <div className="flex-grow">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="Admin" />
       <div className="flex flex-col sm:flex-row">
         <Sidebar />
-        <div className="flex-1 p-4 sm:p-6">
+        <div className="flex-1 p-4 sm:p-6 bg-secondary">
           {/* Header section aligned with product management */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-primary">

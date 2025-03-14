@@ -34,7 +34,7 @@ export default function Expand({
           </div>
           <button 
             onClick={onClose}
-            className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors"
+            className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors "
             aria-label="Close panel"
           >
             <svg 
@@ -56,7 +56,7 @@ export default function Expand({
           </button>
         </div>
         
-        <div className="bg-white rounded border border-gray-200 p-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
+        <div className="bg-white rounded border border-gray-200 p-4 max-h-[calc(100vh-12rem)] overflow-y-auto text-justify">
           {children}
         </div>
       </div>

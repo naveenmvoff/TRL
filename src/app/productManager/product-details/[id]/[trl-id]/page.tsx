@@ -6,6 +6,8 @@ import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { ObjectId } from "mongoose";
 import Select from "react-select";
+import notify from "@/lib/notify";
+import Expand from "@/components/expand";
 
 import DatePicker from "react-datepicker";
 
@@ -56,6 +58,23 @@ const formatDate = (date: Date | null) => {
   });
 };
 
+const canMarkAsCompleted = (data: FormDataValue | null): boolean => {
+  if (!data) return false;
+  return !!(
+    data.description &&
+    data.currentUpdate &&
+    data.startDate &&
+    data.estimatedDate
+  );
+};
+
+const LoadingSpinner = () => (
+  <div className="flex flex-col justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
+    <h1 className="mt-4 text-lg font-semibold text-indigo-600">Loading...</h1>
+  </div>
+);
+
 export default function ProductManager() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -71,6 +90,14 @@ export default function ProductManager() {
   const [showPopupView, setShowPopupView] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TRLItem | null>(null);
   const [formData, setFormData] = useState<FormDataValue | null>(null);
+  const [touchedFields, setTouchedFields] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [expandedContent, setExpandedContent] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   console.log("formData", formData);
 
   const paramsing = useParams();
@@ -80,7 +107,7 @@ export default function ProductManager() {
   useEffect(() => {
     const fetchTrlDetails = async () => {
       if (!id) return;
-
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/trl-level?productId=${id}`);
         const data = await response.json();
@@ -112,6 +139,8 @@ export default function ProductManager() {
         }
       } catch (error) {
         console.error("Error fetching TRL details:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -178,6 +207,7 @@ export default function ProductManager() {
       });
     }
     setShowPopupEdit(true);
+    setTouchedFields({}); // Reset touched fields when opening edit popup
   };
 
   const handleView = (item: TRLItem) => {
@@ -216,8 +246,38 @@ export default function ProductManager() {
   const handleSubmitEdit = async () => {
     if (!formData) return;
 
+    // Check all required fields
+    const hasRequiredFields = !!(
+      formData.description &&
+      formData.currentUpdate &&
+      formData.startDate &&
+      formData.estimatedDate
+    );
+
+    // Set all fields as touched to show validation messages
+    setTouchedFields({
+      description: true,
+      currentUpdate: true,
+      startDate: true,
+      estimatedDate: true,
+    });
+
+    // If required fields are missing, show error and return
+    if (!hasRequiredFields) {
+      notify("Please fill in all required fields before updating!");
+      return;
+    }
+
+    // Check if trying to mark as completed
+    if (formData.status === "Completed" && !canMarkAsCompleted(formData)) {
+      notify(
+        "Please fill in all required fields (Description, Current Update, Start Date, and Estimated Date) before marking as Completed"
+      );
+      return;
+    }
+
     try {
-      console.log("formData recived!", formData);
+      console.log("formData received!", formData);
       const response = await fetch(`/api/trl-level/${formData._id}`, {
         method: "PUT",
         headers: {
@@ -247,17 +307,35 @@ export default function ProductManager() {
     }
   };
 
+  const handleExpandClose = () => {
+    setExpandedContent(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white w-full overflow-hidden">
+        <NavBar role="Product Manager" />
+        <div className="flex h-[calc(100vh-4rem)]">
+          <SideBar />
+          <div className="flex-grow">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <NavBar role="Product Manager" />
       <div className="flex flex-1">
         {" "}
         {/* Changed this container */}
-        <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white">
+        {/* <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white"> */}
           <SideBar />
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <main className="bg-gray-100 p-6 min-h-[calc(100vh-4rem)]">
+        {/* </div> */}
+        <div className="flex-1 overflow-y-auto ">
+          <main className="bg-secondary p-6 min-h-[calc(100vh-4rem)]">
             <div className="bg-white rounded-md shadow-sm">
               <div className="p-6">
                 <h2 className="text-xl font-medium text-gray-800">
@@ -299,11 +377,22 @@ export default function ProductManager() {
                         <td className="py-4 px-6 text-black">
                           {item.segregation}
                         </td>
+
                         <td className="py-4 px-6 text-black">
-                          {item.description}
+                          {item.description.split(" ").length > 5
+                            ? `${item.description
+                                .split(" ")
+                                .slice(0, 5)
+                                .join(" ")}...`
+                            : item.description}
                         </td>
                         <td className="py-4 px-6 text-black">
-                          {item.currentUpdated}
+                          {item.description.split(" ").length > 5
+                            ? `${item.description
+                                .split(" ")
+                                .slice(0, 5)
+                                .join(" ")}...`
+                            : item.currentUpdated}
                         </td>
                         <td className="py-4 px-6 text-black">
                           <span
@@ -378,21 +467,26 @@ export default function ProductManager() {
                   </div>
 
                   <p
-                    onClick={() => setShowPopupEdit(false)}
-                    className="text-lg font-semibold text-red1 hover:text-black hover:font-bold"
+                    onClick={() => {
+                      setShowPopupEdit(false);
+                      setTouchedFields({}); // Reset touched fields when closing
+                    }}
+                    className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors "
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
+                      width="20"
+                      height="20"
                       viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-7"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-gray-600"
                     >
                       <path
+                        d="M6 18L18 6M6 6L18 18"
+                        stroke="currentColor"
+                        strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                       />
                     </svg>
                   </p>
@@ -400,7 +494,7 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-regular text-black mt-2 flex items-center">
                         Description
                       </p>
                       <textarea
@@ -415,12 +509,33 @@ export default function ProductManager() {
                               : null
                           )
                         }
+                        onBlur={() =>
+                          setTouchedFields((prev) => ({
+                            ...prev,
+                            description: true,
+                          }))
+                        }
                         placeholder="Enter the Description of the Stage"
-                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        className={`w-full p-2 border 
+                          ${
+                            touchedFields.description && !formData?.description
+                              ? "border-red-300"
+                              : "border-gray-300"
+                          } 
+                          text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none`}
                         rows={4}
+                        style={{ textAlign: "justify" }}
                       />
+                      <h1>
+                        {touchedFields.description &&
+                          !formData?.description && (
+                            <span className="text-red-500 text-sm ml-1">
+                              Description Required
+                            </span>
+                          )}
+                      </h1>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-regular text-black mt-2 flex items-center">
                         Current Update
                       </p>
                       <textarea
@@ -435,10 +550,33 @@ export default function ProductManager() {
                               : null
                           )
                         }
+                        onBlur={() =>
+                          setTouchedFields((prev) => ({
+                            ...prev,
+                            currentUpdate: true,
+                          }))
+                        }
                         placeholder="Enter the Current Update of the Stage"
-                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                        className={`w-full p-2 border 
+                          ${
+                            touchedFields.currentUpdate &&
+                            !formData?.currentUpdate
+                              ? "border-red-300"
+                              : "border-gray-300"
+                          } 
+                          text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none`}
                         rows={4}
+                        style={{ textAlign: "justify" }}
                       />
+
+                      <h1>
+                        {touchedFields.currentUpdate &&
+                          !formData?.currentUpdate && (
+                            <span className="text-red-500 text-sm ml-1">
+                              Current Update Required
+                            </span>
+                          )}
+                      </h1>
 
                       <p className="text-md font-regular text-black mt-2">
                         Demo Required
@@ -458,48 +596,148 @@ export default function ProductManager() {
                           setFormData({
                             ...formData,
                             demoRequired: e.value,
-                            description: formData.description,
-                            currentUpdate: formData.currentUpdate,
-                            documentationLink: formData.documentationLink,
-                            otherNotes: formData.otherNotes,
-                            demoStatus: formData.demoStatus,
-                            status: formData.status,
+                            // Reset demoStatus when switching to No
+                            demoStatus: e.value ? formData.demoStatus : "",
                           })
                         }
                         className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                      />
-
-                      <p className="text-md font-regular text-black mt-2">
-                        If Yes, Demo Status
-                      </p>
-
-                      <Select
-                        options={[
-                          { value: "completed", label: "completed" },
-                          { value: "pending", label: "pending" },
-                        ]}
-                        value={{
-                          value: formData?.demoStatus || "",
-                          label: formData?.demoStatus || "",
+                        menuPortalTarget={document.body} // This ensures the menu is portalled to the body
+                        menuPosition="absolute"
+                        styles={{
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 99999, // Increased z-index
+                          }),
+                          menu: (base) => ({
+                            ...base,
+                            position: "absolute",
+                            zIndex: 99999, // Increased z-index
+                            width: "inherit",
+                            backgroundColor: "white", // Added background color
+                            boxShadow:
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)", // Added shadow
+                          }),
+                          control: (base) => ({
+                            ...base,
+                            background: "white",
+                            borderColor: "#e2e8f0",
+                            zIndex: 1, // Added z-index for control
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isSelected
+                              ? "#5D4FEF"
+                              : state.isDisabled
+                              ? "#f3f4f6"
+                              : "white",
+                            color: state.isSelected
+                              ? "white"
+                              : state.isDisabled
+                              ? "#9ca3af"
+                              : "black",
+                            cursor: state.isDisabled
+                              ? "not-allowed"
+                              : "pointer",
+                            "&:hover": {
+                              backgroundColor: state.isSelected
+                                ? "#5D4FEF"
+                                : state.isDisabled
+                                ? "#f3f4f6"
+                                : "#deebff",
+                              color: state.isSelected
+                                ? "white"
+                                : state.isDisabled
+                                ? "#9ca3af"
+                                : "black",
+                            },
+                          }),
                         }}
-                        onChange={(e: any) =>
-                          setFormData(
-                            formData
-                              ? {
-                                  ...formData,
-                                  demoStatus: e.value,
-                                  description: formData.description,
-                                  currentUpdate: formData.currentUpdate,
-                                  documentationLink: formData.documentationLink,
-                                  otherNotes: formData.otherNotes,
-                                  demoRequired: formData.demoRequired,
-                                  status: formData.status,
-                                }
-                              : null
-                          )
-                        }
-                        className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                       />
+
+                      {formData?.demoRequired && (
+                        <>
+                          <p className="text-md font-regular text-black mt-2">
+                            Demo Status
+                          </p>
+                          <div className="relative z-[1000]">
+                            {" "}
+                            {/* Add this wrapper div */}
+                            <Select
+                              options={[
+                                { value: "completed", label: "Completed" },
+                                { value: "pending", label: "Pending" },
+                              ]}
+                              value={{
+                                value: formData?.demoStatus || "pending",
+                                label: formData?.demoStatus
+                                  ? formData.demoStatus
+                                      .charAt(0)
+                                      .toUpperCase() +
+                                    formData.demoStatus.slice(1)
+                                  : "Pending",
+                              }}
+                              onChange={(e: any) =>
+                                setFormData(
+                                  formData
+                                    ? {
+                                        ...formData,
+                                        demoStatus: e.value,
+                                      }
+                                    : null
+                                )
+                              }
+                              className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                              menuPortalTarget={document.body}
+                              menuPosition="absolute"
+                              menuPlacement="auto"
+                              styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                                menu: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                  backgroundColor: "white",
+                                }),
+                                control: (base) => ({
+                                  ...base,
+                                  background: "white",
+                                  borderColor: "#e2e8f0",
+                                }),
+                                option: (base, state) => ({
+                                  ...base,
+                                  backgroundColor: state.isSelected
+                                    ? "#5D4FEF"
+                                    : state.isDisabled
+                                    ? "#f3f4f6"
+                                    : "white",
+                                  color: state.isSelected
+                                    ? "white"
+                                    : state.isDisabled
+                                    ? "#9ca3af"
+                                    : "black",
+                                  cursor: state.isDisabled
+                                    ? "not-allowed"
+                                    : "pointer",
+                                  "&:hover": {
+                                    backgroundColor: state.isSelected
+                                      ? "#5D4FEF"
+                                      : state.isDisabled
+                                      ? "#f3f4f6"
+                                      : "#deebff",
+                                    color: state.isSelected
+                                      ? "white"
+                                      : state.isDisabled
+                                      ? "#9ca3af"
+                                      : "black",
+                                  },
+                                }),
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="w-1/2 flex flex-col">
@@ -541,6 +779,7 @@ export default function ProductManager() {
                         placeholder="Enter any other notes"
                         className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
                         rows={4}
+                        style={{ textAlign: "justify" }}
                       />
 
                       <div className="flex flex-row gap-4">
@@ -570,10 +809,27 @@ export default function ProductManager() {
                                     : formData.extendedDate,
                               })
                             }
-                            className="w-28 p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                            onBlur={() =>
+                              setTouchedFields((prev) => ({
+                                ...prev,
+                                startDate: true,
+                              }))
+                            }
+                            className={`w-28 p-2 border ${
+                              touchedFields.startDate && !formData?.startDate
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            } text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
                             dateFormat="dd/MM/yyyy"
-                            placeholderText="Select start date"
                           />
+                          <h1>
+                            {touchedFields.startDate &&
+                              !formData?.startDate && (
+                                <span className="text-red-500 text-sm ml-1">
+                                  *Required
+                                </span>
+                              )}
+                          </h1>
                         </div>
 
                         <div className="pr-4">
@@ -596,12 +852,32 @@ export default function ProductManager() {
                                     : formData.extendedDate,
                               })
                             }
-                            className="w-28 p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                            onBlur={() =>
+                              setTouchedFields((prev) => ({
+                                ...prev,
+                                estimatedDate: true,
+                              }))
+                            }
+                            className={`w-28 p-2 border ${
+                              touchedFields.estimatedDate &&
+                              !formData?.estimatedDate
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            } text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
                             dateFormat="dd/MM/yyyy"
-                            placeholderText="Select estimated date"
+                            // placeholderText="Select estimated date"
                             minDate={formData?.startDate || undefined} // Add one day to start date
                             disabled={!formData?.startDate}
                           />
+
+                          <h1>
+                            {touchedFields.estimatedDate &&
+                              !formData?.estimatedDate && (
+                                <span className="text-red-500 text-sm ml-1">
+                                  *Required
+                                </span>
+                              )}
+                          </h1>
                         </div>
 
                         <div className="pr-4">
@@ -616,7 +892,6 @@ export default function ProductManager() {
                             }
                             className="w-28 p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                             dateFormat="dd/MM/yyyy"
-                            placeholderText="Select extended date"
                             minDate={
                               formData?.estimatedDate
                                 ? new Date(
@@ -635,7 +910,11 @@ export default function ProductManager() {
 
                       <Select
                         options={[
-                          { value: "Completed", label: "Completed" },
+                          {
+                            value: "Completed",
+                            label: "Completed",
+                            isDisabled: !canMarkAsCompleted(formData),
+                          },
                           { value: "In Progress", label: "In Progress" },
                           { value: "Pending", label: "Pending" },
                         ]}
@@ -671,13 +950,28 @@ export default function ProductManager() {
                             ...base,
                             backgroundColor: state.isSelected
                               ? "#5D4FEF"
+                              : state.isDisabled
+                              ? "#f3f4f6"
                               : "white",
-                            color: state.isSelected ? "white" : "black",
+                            color: state.isSelected
+                              ? "white"
+                              : state.isDisabled
+                              ? "#9ca3af"
+                              : "black",
+                            cursor: state.isDisabled
+                              ? "not-allowed"
+                              : "pointer",
                             "&:hover": {
                               backgroundColor: state.isSelected
                                 ? "#5D4FEF"
+                                : state.isDisabled
+                                ? "#f3f4f6"
                                 : "#deebff",
-                              color: state.isSelected ? "white" : "black",
+                              color: state.isSelected
+                                ? "white"
+                                : state.isDisabled
+                                ? "#9ca3af"
+                                : "black",
                             },
                           }),
                         }}
@@ -687,7 +981,10 @@ export default function ProductManager() {
 
                   <div className="mt-6 flex justify-end gap-4">
                     <button
-                      onClick={() => setShowPopupEdit(false)}
+                      onClick={() => {
+                        setShowPopupEdit(false);
+                        setTouchedFields({}); // Reset touched fields when canceling
+                      }}
                       className="px-4 py-2 bg-red1 rounded-md hover:bg-red2"
                     >
                       Cancel
@@ -722,20 +1019,23 @@ export default function ProductManager() {
                   </div>
                   <p
                     onClick={() => setShowPopupView(false)}
-                    className="text-lg font-semibold text-red1 hover:text-black hover:font-bold"
-                  >
+                    className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors "
+                    >
+
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
+                      width="20"
+                      height="20"
                       viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-7"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-gray-600"
                     >
                       <path
+                        d="M6 18L18 6M6 6L18 18"
+                        stroke="currentColor"
+                        strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                       />
                     </svg>
                   </p>
@@ -743,19 +1043,111 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
+                      {/* <p className="text-md font-regular text-black mt-2">
+                        Description
+                      </p>
+                      <p 
+                        className="w-full p-2 border text-black rounded-md bg-gray-50 line-clamp-4 overflow-hidden cursor-pointer hover:bg-gray-100" 
+                        onClick={() => setExpandedContent({
+                          title: "Description",
+                          content: formData?.description || "-"
+                        })}
+                      >
+                        {formData?.description || "-"}
+                      </p> */}
+
+                      {/* <p className="text-md font-regular text-black mt-2">
+                        Description
+                      </p>
+                      <p
+                        className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden cursor-pointer hover:bg-gray-100"
+                        onClick={() =>
+                          setExpandedContent({
+                            title: "Description",
+                            content: formData?.description || "-",
+                          })
+                        }
+                      >
+                        {formData?.description
+                          ? formData.description.split(" ").length > 60
+                            ? `${formData.description
+                                .split(" ")
+                                .slice(0, 69)
+                                .join(" ")}...`
+                            : formData.description
+                          : "-"}
+                      </p> */}
+
                       <p className="text-md font-regular text-black mt-2">
                         Description
                       </p>
-                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
-                        {formData?.description || "-"}
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
+                        {formData?.description ? (
+                          formData.description.split(" ").length > 60 ? (
+                            <>
+                              {formData.description
+                                .split(" ")
+                                .slice(0, 60)
+                                .join(" ")}
+                              <span
+                                onClick={() =>
+                                  setExpandedContent({
+                                    title: "Description",
+                                    content: formData?.description || "-",
+                                  })
+                                }
+                                className="text-blue-500 font-medium cursor-pointer"
+                              >
+                                {" "}
+                                Read More
+                              </span>
+                            </>
+                          ) : (
+                            formData.description
+                          )
+                        ) : (
+                          "-"
+                        )}
                       </p>
 
                       <p className="text-md font-regular text-black mt-2">
                         Current Update
                       </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
+                        {formData?.currentUpdate ? (
+                          formData.currentUpdate.split(" ").length > 60 ? (
+                            <>
+                              {formData.currentUpdate
+                                .split(" ")
+                                .slice(0, 60)
+                                .join(" ")}
+                              <span
+                                onClick={() =>
+                                  setExpandedContent({
+                                    title: "Current Update",
+                                    content: formData?.currentUpdate || "-",
+                                  })
+                                }
+                                className="text-blue-500 font-medium cursor-pointer"
+                              >
+                                {" "}
+                                Read More
+                              </span>
+                            </>
+                          ) : (
+                            formData.currentUpdate
+                          )
+                        ) : (
+                          "-"
+                        )}
+                      </p>
+
+                      {/* <p className="text-md font-regular text-black mt-2">
+                        Current Update
+                      </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
                         {formData?.currentUpdate || "-"}
-                      </p>
+                      </p> */}
 
                       <p className="text-md font-regular text-black mt-2">
                         Demo Required
@@ -780,12 +1172,45 @@ export default function ProductManager() {
                         {formData?.documentationLink || "-"}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      {/* <p className="text-md font-regular text-black mt-2">
                         Other Notes
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
                         {formData?.otherNotes || "-"}
+                      </p> */}
+
+                      <p className="text-md font-regular text-black mt-2">
+                        Other Notes
                       </p>
+                      <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
+                        {formData?.otherNotes ? (
+                          formData.otherNotes.split(" ").length > 60 ? (
+                            <>
+                              {formData.otherNotes
+                                .split(" ")
+                                .slice(0, 60)
+                                .join(" ")}
+                              <span
+                                onClick={() =>
+                                  setExpandedContent({
+                                    title: "Other Notes",
+                                    content: formData?.otherNotes || "-",
+                                  })
+                                }
+                                className="text-blue-500 font-medium cursor-pointer"
+                              >
+                                {" "}
+                                Read More
+                              </span>
+                            </>
+                          ) : (
+                            formData.otherNotes
+                          )
+                        ) : (
+                          "-"
+                        )}
+                      </p>
+
                       <div className="flex flex-row gap-4">
                         <div>
                           <p className="text-md font-regular text-black mt-2">
@@ -838,6 +1263,15 @@ export default function ProductManager() {
           </div>
         )}
       </div>
+      {expandedContent && (
+        <Expand title={expandedContent.title} onClose={handleExpandClose}>
+          <div className="mt-4 p-4">
+            <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
+              {expandedContent.content}
+            </p>
+          </div>
+        </Expand>
+      )}
     </div>
   );
 }

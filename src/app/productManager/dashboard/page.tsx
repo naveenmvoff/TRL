@@ -90,7 +90,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
           ))
         ) : (
           <div className="text-center py-4 text-gray-500">
-            No products available
+            No products are currently assigned to you!
           </div>
         )}
       </div>
@@ -98,12 +98,20 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   );
 };
 
+const LoadingSpinner = () => (
+  <div className="flex flex-col justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
+    <h1 className="mt-4 text-lg font-semibold text-indigo-600">Loading...</h1>
+  </div>
+);
+
 export default function productManager() {
   const { data: Session } = useSession();
   interface ProductData {
     products: any[];
   }
   const [productData, setProductData] = useState<ProductData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   console.log("productData********", productData);
   const PMID = Session?.user?.id;
@@ -111,19 +119,38 @@ export default function productManager() {
 
   useEffect(() => {
     const fetchPMData = async () => {
+      setIsLoading(true);
       if (PMID) {
-        const response = await fetch(
-          `/api/product-manager/pm?id=${Session.user.id}`
-        );
-        const data = await response.json();
-        setProductData(data); // Here the data is stored in state
+        try {
+          const response = await fetch(
+            `/api/product-manager/pm?id=${Session.user.id}`
+          );
+          const data = await response.json();
+          setProductData(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchPMData();
   }, [Session]);
 
-  console.log("productData", productData);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white w-full overflow-hidden">
+        <NavBar role="Product Manager" />
+        <div className="flex h-[calc(100vh-4rem)]">
+          <SidebarPM />
+          <div className="flex-grow">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
@@ -132,7 +159,7 @@ export default function productManager() {
         {" "}
         {/* 4rem = Navbar height */}
         <SidebarPM />
-        <div className="flex-grow overflow-y-auto">
+        <div className="flex-grow overflow-y-auto bg-secondary">
           <ProductDetails
             userName={Session?.user?.name || ""}
             email={Session?.user?.email || ""}

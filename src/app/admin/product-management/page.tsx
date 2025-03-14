@@ -32,6 +32,13 @@ interface Product {
   createdAt: string;
 }
 
+const LoadingSpinner = () => (
+  <div className="flex flex-col justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
+    <h1 className="mt-4 text-lg font-semibold text-indigo-600">Loading...</h1>
+  </div>
+);
+
 export default function ProductManagementPage() {
   const [showPopupCreateNewProduct, setShowPopupCreateNewProduct] =
     useState(false);
@@ -58,6 +65,7 @@ export default function ProductManagementPage() {
   const [showPopupDelete, setShowPopupDelete] = useState(false);
   const [showPopupEdit, setShowPopupEdit] = useState(false);
   const [trlDetials, setTrlDetials] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   console.log("trlDetials", trlDetials);
 
@@ -80,6 +88,7 @@ export default function ProductManagementPage() {
 
   useEffect(() => {
     async function fetchProducts() {
+      setIsLoading(true);
       try {
         const response = await fetch("/api/admin/products");
         const data = await response.json();
@@ -92,7 +101,7 @@ export default function ProductManagementPage() {
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchProducts();
@@ -253,7 +262,6 @@ export default function ProductManagementPage() {
 
   // // ====================Create TRL Levels - Step By Step=====================================
 
-
   const createTrlLevels = async (productID: string, trlDetails: any[]) => {
     for (const trl of trlDetails) {
       const trlLevelID = trl._id;
@@ -265,7 +273,7 @@ export default function ProductManagementPage() {
           trlLevelId: trlLevelID, // Assign TRL level _id
           subLevelId: subLevel._id, // Assign sub-level _id
           description: "",
-          currentUpdate:"",
+          currentUpdate: "",
           status: "to do",
           documentationLink: "",
           otherNotes: "",
@@ -275,12 +283,11 @@ export default function ProductManagementPage() {
           estimatedDate: "",
           extendedDate: "",
         };
-        
+
         console.log("Payload****", payload);
 
         // Send data to the API route
         try {
-
           const response = await fetch("/api/admin/product-trl", {
             method: "POST",
             headers: {
@@ -301,9 +308,6 @@ export default function ProductManagementPage() {
     }
   };
 
-
-
-
   // Delete User Click
   const handleDeleteClick = (productID: string) => {
     setSelectedProductID(productID);
@@ -313,35 +317,30 @@ export default function ProductManagementPage() {
   // // Delete Product detials in the Data Base!
   const handleDeleteProduct = async (productId: string) => {
     try {
-        // First delete associated TRL level data
-        const trlResponse = await fetch(`/api/trl-level?productId=${productId}`, {
-            method: 'DELETE',
-        });
+      // Delete the product first
+      const productResponse = await fetch(`/api/admin/products/${productId}`, {
+        method: "DELETE",
+      });
 
-        if (!trlResponse.ok) {
-            notify("Failed to delete TRL level data", "error");
-            return;
-        }
+      const data = await productResponse.json();
 
-        // Then delete the product
-        const productResponse = await fetch(`/api/admin/products/${productId}`, {
-            method: 'DELETE',
-        });
+      if (!productResponse.ok) {
+        notify(data.message || "Failed to delete product", "error");
+        return;
+      }
 
-        if (!productResponse.ok) {
-            notify("Failed to delete product", "error");
-            return;
-        }
-
+      // Only if product deletion was successful
+      if (data.success) {
         notify("Product deleted successfully", "success");
-        // Refresh the products list
-        productData();
-        
+        await productData(); // Refresh the products list
+        setShowPopupDelete(false);
+        setSelectedProductID(null);
+      }
     } catch (error) {
-        console.error('Error deleting product:', error);
-        notify("Error occurred while deleting product", "error");
+      console.error("Error deleting product:", error);
+      notify("Error occurred while deleting product", "error");
     }
-};
+  };
 
   const handleEditClick = (productID: string) => {
     setSelectedProductID(productID);
@@ -432,12 +431,26 @@ export default function ProductManagementPage() {
     label: `${accessUsers.name} - ${accessUsers.email}`,
   }));
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white w-full overflow-hidden">
+        <NavBar role="admin" />
+        <div className="flex h-[calc(100vh-4rem)]">
+          <Sidebar />
+          <div className="flex-grow">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="admin" />
       <div className="flex flex-col sm:flex-row">
         <Sidebar />
-        <div className="flex-1 p-4 sm:p-6">
+        <div className="flex-1 p-4 sm:p-6 bg-secondary">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-primary">
               Product Management
