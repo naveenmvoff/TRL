@@ -6,17 +6,19 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+// Define prop type for the Sidebar component
+interface SidebarProps {
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
+}
 
-export default function Sidebar() {
+export default function Sidebar({ activeSection = "", onSectionChange }: SidebarProps) {
 
   // const { data: session, status } = useSession();
-
 
   const router = useRouter();
   const pathname = usePathname();
   const [showPopup, setShowPopup] = useState(false);
-
-
 
   const handleSignOut = async () => {
     try {
@@ -28,6 +30,12 @@ export default function Sidebar() {
     }
   };
 
+  // Function to handle section change
+  const handleSectionChange = (section: string) => {
+    if (onSectionChange) {
+      onSectionChange(section);
+    }
+  };
 
   return (
     <div className="w-52 min-h-[calc(100vh-4rem)] border-r flex flex-col">
@@ -41,6 +49,28 @@ export default function Sidebar() {
           onClick={() => router.push("/stakeholder/product-overview")}
         >
           Product overview
+        </div>
+
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
+            pathname === "/stakeholder/overview"
+              ? "bg-primary text-white"
+              : "bg-white text-black border hover:bg-secondary"
+          }`}
+          onClick={() => router.push("/stakeholder/overview")}
+        >
+          Overview
+        </div>
+
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
+            pathname === "/stakeholder/product"
+              ? "bg-primary text-white"
+              : "bg-white text-black border hover:bg-secondary"
+          }`}
+          onClick={() => router.push("/stakeholder/product")}
+        >
+          Products
         </div>
 
         <div

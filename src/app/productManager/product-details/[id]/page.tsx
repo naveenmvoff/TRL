@@ -101,25 +101,6 @@ export default function ProductDetails() {
     return "Pending";
   };
 
-  // // =============GET PRODUCT DETAILS ONLY ===============
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      if (!id) return;
-      setIsLoading(true);
-      try {
-        console.log("Product ID in Request: ", id);
-        const response = await fetch(`/api/product-manager/product?id=${id}`);
-        console.log("ProductDetails - Got responce", response);
-        const data = await response.json();
-        console.log("ProductDetails : ", data);
-        setProductDetails(data);
-      } catch (error) {
-        console.error("Error fetching product details:", error);
-      }
-    };
-
-    fetchProductDetails();
-  }, [id]);
 
   // // =============GET TRL MASTER DETAILS from TRL MASTER Schema===============
   useEffect(() => {
@@ -158,6 +139,28 @@ export default function ProductDetails() {
     trlMasterData();
   }, [id]);
 
+
+  // // =============GET PRODUCT DETAILS ONLY ===============
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        console.log("Product ID in Request: ", id);
+        const response = await fetch(`/api/product-manager/product?id=${id}`);
+        console.log("ProductDetails - Got responce", response);
+        const data = await response.json();
+        console.log("ProductDetails : ", data);
+        setProductDetails(data);
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      }
+    };
+
+    fetchProductDetails();
+  }, [id]);
+
+
   // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
   useEffect(() => {
     const fetchTrlDetails = async () => {
@@ -187,13 +190,13 @@ export default function ProductDetails() {
             // Find first sublevel details
             const firstSubLevel = sortedSubLevels?.[0];
             const firstSubLevelDetails = firstSubLevel
-              ? levelDetails.find((d) => d.subLevelId === firstSubLevel._id)
+              ? levelDetails.find((d: any) => d.subLevelId === firstSubLevel._id)
               : null;
-
+            
             // Find last sublevel details
             const lastSubLevel = sortedSubLevels?.[sortedSubLevels.length - 1];
             const lastSubLevelDetails = lastSubLevel
-              ? levelDetails.find((d) => d.subLevelId === lastSubLevel._id)
+              ? levelDetails.find((d: any) => d.subLevelId === lastSubLevel._id)
               : null;
 
             return {
