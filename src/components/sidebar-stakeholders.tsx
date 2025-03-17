@@ -53,17 +53,6 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
 
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/stakeholder/overview"
-              ? "bg-primary text-white"
-              : "bg-white text-black border hover:bg-secondary"
-          }`}
-          onClick={() => router.push("/stakeholder/overview")}
-        >
-          Overview
-        </div>
-
-        <div
-          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
             pathname === "/stakeholder/product"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
@@ -73,7 +62,7 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
           Products
         </div>
 
-        <div
+        {/* <div
           // className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
           className={`px-3 py-2 text-sm text-center rounded-md cursor-not-allowed ${
             pathname === "/admin/user-management"
@@ -83,7 +72,7 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
           // onClick={() => router.push("/admin/user-management")}
         >
           Profile
-        </div>
+        </div> */}
       </div>
       <div className="mt-auto p-4 ">
         <button

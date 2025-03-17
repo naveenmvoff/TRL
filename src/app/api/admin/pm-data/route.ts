@@ -9,7 +9,6 @@ export async function GET() {
       // console.log("only PM Data",users)
       return NextResponse.json(users, { status: 200 });
   
-  
     } catch (error) {
       console.error("Error fetching users:", error);
       return NextResponse.json({ message: "Failed to fetch users." }, { status: 500 });

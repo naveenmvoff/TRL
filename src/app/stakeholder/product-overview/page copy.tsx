@@ -307,18 +307,19 @@ export default function ProductOverview() {
     trlItemsData: any[];
     progressData: any[];
   }) => {
-    // Keep existing data calculation
-    const data = progressData.length > 0
-      ? progressData.map((product) => ({
-          name: product.productName,
-          progress: product.completionPercentage,
-          levels: product.trlLevels.map((level: any) => ({
-            level: level.levelNumber,
-            completed: level.completedSublevels,
-            total: level.totalSublevels,
-          })),
-        }))
-      : [];
+    // Use the progress data for the chart instead of calculating it here
+    const data =
+      progressData.length > 0
+        ? progressData.map((product) => ({
+            name: product.productName,
+            progress: product.completionPercentage,
+            levels: product.trlLevels.map((level: any) => ({
+              level: level.levelNumber,
+              completed: level.completedSublevels,
+              total: level.totalSublevels,
+            })),
+          }))
+        : [];
 
     return (
       <div className="w-full h-full">
@@ -326,32 +327,25 @@ export default function ProductOverview() {
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
-            {/* Modified YAxis to show TRL levels on the left while maintaining percentage bars */}
             <YAxis
-              yAxisId="left"
-              orientation="left"
-              domain={[1, 9]}
-              ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9]}
+              // domain={[0, 9]}
+              // ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+              domain={[0, 100]}
+              ticks={[0, 20, 40, 60, 80, 100]}
               label={{
-                value: "TRL Level",
+                // value: "TRL Level",
+                value: "Completion %",
                 angle: -90,
                 position: "insideLeft",
                 style: { textAnchor: "middle" },
               }}
             />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={[0, 100]}
-              ticks={[0, 20, 40, 60, 80, 100]}
-              tickFormatter={(value) => `${value}%`}
-            />
             <Tooltip
               formatter={(value, name, props) => {
-                return [`${value}% Complete`, "Progress"];
+                return [`${value}% Complete`, "TRL Progress"];
               }}
             />
-            <Bar yAxisId="right" dataKey="progress" fill="#4f46e5" />
+            <Bar dataKey="progress" fill="#4f46e5" />
           </BarChart>
         </ResponsiveContainer>
       </div>

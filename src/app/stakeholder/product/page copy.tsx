@@ -13,8 +13,7 @@ export default function ProductPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<any[] | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-  const [productManagerName, setProductManagerName] = useState<string | null>(null);
-
+  
   // Fetch products for the user
   useEffect(() => {
     const fetchUserProducts = async () => {
@@ -66,34 +65,6 @@ export default function ProductPage() {
   const handleProductSelect = (product: any) => {
     setSelectedProduct(product);
   };
-
-  useEffect(() => {
-    const fetchProductManager = async () => {
-      if (selectedProduct?.productManagerID) {
-        try {
-          console.log("Fetching PM:", selectedProduct.productManagerID);
-          const response = await fetch(
-            `/api/stakeholder/productmanager?userID=${selectedProduct.productManagerID}`
-          );
-          const data = await response.json();
-          
-          if (data.success && data.name) {
-            setProductManagerName(data.name);
-          } else {
-            setProductManagerName("Unknown Manager");
-            console.error("No manager data:", data.message);
-          }
-        } catch (error) {
-          console.error("Error fetching manager:", error);
-          setProductManagerName("Error loading manager");
-        }
-      } else {
-        setProductManagerName(null);
-      }
-    };
-
-    fetchProductManager();
-  }, [selectedProduct]);
 
   if (isLoading) {
     return (
@@ -179,7 +150,7 @@ export default function ProductPage() {
                     </h2>
                     <div className="flex items-center text-sm text-gray-500">
                       <User className="h-4 w-4 mr-1" />
-                      <span>Product Manager: {productManagerName || "Not assigned"}</span>
+                      <span>Product Manager: {selectedProduct.productManagerID || "Not assigned"}</span>
                     </div>
                   </div>
                   
