@@ -14,7 +14,6 @@ import { ObjectId } from "mongoose";
 import Select from "react-select";
 import notify from "@/lib/notify";
 import Expand from "@/components/expand";
-import SwitchTrl from '@/components/switch-trl';
 
 import DatePicker from "react-datepicker";
 
@@ -364,9 +363,17 @@ export default function ProductManager() {
                 </div>
               </div>
 
-                      {/* Forward/Backward Navigation */}
-              {/* <SwitchTrl products={products} />  */}
-                    {/* Replace the div containing IoChevron buttons */}
+              {/* Forward/Backward Navigation */}
+              <div className="flex flex-row space-x-3">
+                <IoChevronBackCircle
+                  className="text-gray-600 hover:text-gray-700 transition-colors"
+                  size={35}
+                />
+                <IoChevronForwardCircle
+                  className="text-gray-600 hover:text-gray-700 transition-colors"
+                  size={35}
+                />
+              </div>
             </div>
             <div className="bg-white rounded-md shadow-sm">
               

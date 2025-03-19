@@ -1,20 +1,13 @@
 "use client";
 import { Pencil, FileText } from "lucide-react";
-import {
-  IoArrowBackCircle,
-  IoChevronForwardCircle,
-  IoChevronBackCircle,
-} from "react-icons/io5";
-import { MdOutlineArrowForwardIos } from "react-icons/md";
 import NavBar from "@/components/navbar/navbar";
-import SideBar from "@/components/sidebar-pm";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Sidebar from "@/components/sidebar-stakeholders";
+import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { ObjectId } from "mongoose";
 import Select from "react-select";
 import notify from "@/lib/notify";
 import Expand from "@/components/expand";
-import SwitchTrl from '@/components/switch-trl';
 
 import DatePicker from "react-datepicker";
 
@@ -83,7 +76,6 @@ const LoadingSpinner = () => (
 );
 
 export default function ProductManager() {
-  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const trlLevelName = searchParams.get("name");
@@ -110,8 +102,6 @@ export default function ProductManager() {
 
   const paramsing = useParams();
   const id = paramsing.id as string;
-
-  console.log("id", id);
 
   // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
   useEffect(() => {
@@ -324,9 +314,9 @@ export default function ProductManager() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white w-full overflow-hidden">
-        <NavBar role="Product Manager" />
+        <NavBar role="Stakeholder" />
         <div className="flex h-[calc(100vh-4rem)]">
-          <SideBar />
+          <Sidebar/>
           <div className="flex-grow">
             <LoadingSpinner />
           </div>
@@ -337,40 +327,16 @@ export default function ProductManager() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <NavBar role="Product Manager" />
+      <NavBar role="Stakeholder" />
       <div className="flex flex-1">
         {" "}
         {/* Changed this container */}
         {/* <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white"> */}
-          <SideBar />
+          <Sidebar/>
         {/* </div> */}
         <div className="flex-1 overflow-y-auto ">
           <main className="bg-secondary p-6 min-h-[calc(100vh-4rem)]">
-            
-          <div className="flex flex-row items-center justify-between space-x-4">
-              <div className="flex items-center gap-2">
-                {/* Back Arrow Button */}
-                <IoArrowBackCircle
-                  onClick={() => router.push(`/productManager/product-details/${id}`)}
-                  className="text-gray-600 hover:text-gray-700 transition-colors cursor-pointer"
-                  size={35}
-                />
-
-                {/* Navigation Section - Closer to Back Arrow */}
-                <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full text-white font-bold">
-                  <h1>Home</h1>
-                  <MdOutlineArrowForwardIos size={20} />
-                  <h1>TRL Level</h1>
-                </div>
-              </div>
-
-                      {/* Forward/Backward Navigation */}
-              {/* <SwitchTrl products={products} />  */}
-                    {/* Replace the div containing IoChevron buttons */}
-            </div>
             <div className="bg-white rounded-md shadow-sm">
-              
-           
               <div className="p-6">
                 <h2 className="text-xl font-medium text-gray-800">
                   Product Details
@@ -396,9 +362,9 @@ export default function ProductManager() {
                       <th className="py-3 px-6 text-left font-medium">
                         STATUS
                       </th>
-                      <th className="py-3 px-6 text-left font-medium">
+                      {/* <th className="py-3 px-6 text-left font-medium">
                         ACTIONS
-                      </th>
+                      </th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -441,7 +407,7 @@ export default function ProductManager() {
                             {item.status}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
+                        {/* <td className="py-4 px-6">
                           <div className="flex space-x-2">
                             <button
                               onClick={(e) => {
@@ -457,7 +423,7 @@ export default function ProductManager() {
                               />
                             </button>
                           </div>
-                        </td>
+                        </td> */}
                       </tr>
                     ))}
                     {combinedTrlItems.length === 0 && (

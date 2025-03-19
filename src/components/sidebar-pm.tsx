@@ -29,6 +29,10 @@ export default function SidebarPM() {
     pathname
   );
 
+  const isProductOverview = /^\/productManager\/product-overview$/.test(
+    pathname
+  );
+
   // Extract product ID from the path (for TRL Level navigation)
   const pathSegments = pathname.split("/");
   const productId = pathSegments[pathSegments.length - 2];
@@ -39,29 +43,40 @@ export default function SidebarPM() {
       router.push(`/productManager/product-details/${productId}`);
     } else {
       // Navigate normally if already in product details
-      router.push(`/productManager/product-details/${productId || "default-id"}`);
+      router.push(
+        `/productManager/product-details/${productId || "default-id"}`
+      );
     }
   };
 
   return (
     <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white flex flex-col">
       <div className="p-4 space-y-2">
-        {/* Dashboard */}
-        {(isDashboard || isProductDetails || isTRLLevel) && (
-          <div
-            className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-              pathname === "/productManager/dashboard"
-                ? "bg-primary text-white"
-                : "bg-white text-black border hover:bg-secondary"
-            }`}
-            onClick={() => router.push("/productManager/dashboard")}
-          >
-            Dashboard
-          </div>
-        )}
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
+            pathname.startsWith("/productManager/product-details/") ||
+            pathname === "/productManager/dashboard"
+              ? "bg-primary text-white"
+              : "bg-white text-black border hover:bg-secondary"
+          }`}
+          onClick={() => router.push("/productManager/dashboard")}
+        >
+          Products
+        </div>
 
-        {/* Product Details */}
-        {(isProductDetails || isTRLLevel) && (
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-not-allowed ${
+            pathname.startsWith("/productManager/product-overview/") ||
+            pathname === "/productManager/product-overview"
+              ? "bg-primary text-white"
+              : "bg-white text-black border hover:bg-secondary"
+          }`}
+          // onClick={() => router.push("/productManager/product-overview")}
+        >
+          Product Overview
+        </div>
+
+        {/* {(isProductDetails || isTRLLevel) && (
           <div
             className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
               /^\/productManager\/product-details\/\w+$/.test(pathname)
@@ -69,15 +84,11 @@ export default function SidebarPM() {
                 : "bg-white text-black border hover:bg-secondary"
             }`}
             onClick={handleGoToProductDetails}
-            // onClick={() =>
-            //   router.push(`/productManager/product-details/${"id"}`)
-            // } // Replace `"id"` with actual ID if needed
           >
             Product Details
           </div>
         )}
 
-        {/* TRL Levels */}
         {isTRLLevel && (
           <div
             className="px-3 py-2 text-sm text-center rounded-md cursor-pointer bg-primary text-white"
@@ -87,7 +98,7 @@ export default function SidebarPM() {
           >
             TRL Level
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Logout Button */}

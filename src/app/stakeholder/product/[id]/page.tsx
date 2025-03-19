@@ -2,14 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
-import {
-  IoArrowBackCircle,
-  IoChevronForwardCircle,
-  IoChevronBackCircle,
-} from "react-icons/io5";
-import { MdOutlineArrowForwardIos } from "react-icons/md";
 import NavBar from "@/components/navbar/navbar";
-import Sidebar from "@/components/sidebar-pm";
+import Sidebar from "@/components/sidebar-stakeholders";
 import Expand from "@/components/expand"; // Add this import
 
 import { useParams, useRouter } from "next/navigation";
@@ -17,8 +11,6 @@ import { ObjectId } from "mongoose";
 import { connect } from "http2";
 import { NextRequest, NextResponse } from "next/server";
 import TrlLevelData from "@/models/trlLevelData";
-import SwitchTrl from '@/components/switch-trl';
-
 
 interface TRLItem {
   _id: string;
@@ -82,7 +74,6 @@ export default function ProductDetails() {
   const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
 
   const params = useParams();
-  console.log;
   const id = params.id as string;
   console.log("Product ID: ", id);
 
@@ -101,20 +92,15 @@ export default function ProductDetails() {
   const calculateOverallStatus = (levelDetails: any[]) => {
     if (!levelDetails || levelDetails.length === 0) return "Pending";
 
-    const hasCompleted = levelDetails.some(
-      (detail) => detail.status === "Completed"
-    );
-    const hasInProgress = levelDetails.some(
-      (detail) => detail.status === "In Progress"
-    );
-    const allCompleted = levelDetails.every(
-      (detail) => detail.status === "Completed"
-    );
+    const hasCompleted = levelDetails.some(detail => detail.status === "Completed");
+    const hasInProgress = levelDetails.some(detail => detail.status === "In Progress");
+    const allCompleted = levelDetails.every(detail => detail.status === "Completed");
 
     if (allCompleted) return "Completed";
     if (hasInProgress || hasCompleted) return "In Progress";
     return "Pending";
   };
+
 
   // // =============GET TRL MASTER DETAILS from TRL MASTER Schema===============
   useEffect(() => {
@@ -153,6 +139,7 @@ export default function ProductDetails() {
     trlMasterData();
   }, [id]);
 
+
   // // =============GET PRODUCT DETAILS ONLY ===============
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -172,6 +159,7 @@ export default function ProductDetails() {
 
     fetchProductDetails();
   }, [id]);
+
 
   // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
   useEffect(() => {
@@ -202,11 +190,9 @@ export default function ProductDetails() {
             // Find first sublevel details
             const firstSubLevel = sortedSubLevels?.[0];
             const firstSubLevelDetails = firstSubLevel
-              ? levelDetails.find(
-                  (d: any) => d.subLevelId === firstSubLevel._id
-                )
+              ? levelDetails.find((d: any) => d.subLevelId === firstSubLevel._id)
               : null;
-
+            
             // Find last sublevel details
             const lastSubLevel = sortedSubLevels?.[sortedSubLevels.length - 1];
             const lastSubLevelDetails = lastSubLevel
@@ -252,7 +238,7 @@ export default function ProductDetails() {
     subLevels: any[]
   ) => {
     router.push(
-      `/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(
+      `/stakeholder/product/${productId}/${trlId}?name=${encodeURIComponent(
         levelName
       )}&level=${levelNumber}&subLevels=${encodeURIComponent(
         JSON.stringify(subLevels)
@@ -275,7 +261,7 @@ export default function ProductDetails() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white w-full overflow-hidden">
-        <NavBar role="Product Manager" />
+        <NavBar role="Stakeholder" />
         <div className="flex h-[calc(100vh-4rem)]">
           <Sidebar />
           <div className="flex-grow">
@@ -289,183 +275,61 @@ export default function ProductDetails() {
   return (
     <div className="relative min-h-screen bg-white">
       {/* Use z-index to ensure proper stacking */}
-      <NavBar role="Product Manager" className="z-10" />
+      <NavBar role="Stakeholder" className="z-10" />
       <div className="flex flex-col sm:flex-row relative z-0">
         <Sidebar />
         <div className="flex-1 flex justify-center bg-secondary">
-          <div className="mt-5 w-full max-w-full px-4 sm:px-6">
-            <div className="flex flex-row items-center justify-between space-x-4 mb-4">
-              <div className="flex items-center gap-2">
-                {/* Back Arrow Button */}
-                <IoArrowBackCircle
-                  // onClick={() => router.back()}
-                  onClick={() => router.push(`/productManager/dashboard`)}
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
-                  size={35}
-                />
-
-                {/* Navigation Section - Closer to Back Arrow */}
-                <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
-                  <h1
-                    className="text-gray-200 hover:cursor-pointer transition-all"
-                    onClick={() => router.push(`/productManager/dashboard`)}
-                  >
-                    Home
-                  </h1>
-                  <MdOutlineArrowForwardIos size={20} />
-                  <h1 className="text-white hover:cursor-context-menu">
-                    TRL Level
-                  </h1>
+          <div className="mt-5 w-full max-w-full px-4 sm:px-6 space-y-6">
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4">
+                Product Details
+              </h2>
+              {[
+                {
+                  title: "Description",
+                  content: productDetails?.description,
+                },
+                {
+                  title: "Problem Statement",
+                  content: productDetails?.problemStatement,
+                },
+                {
+                  title: "Solution Expected",
+                  content: productDetails?.solutionExpected,
+                },
+              ].map((section) => (
+                <div 
+                  key={section.title} 
+                  className={`mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors ${
+                    isAnyPopupOpen ? 'pointer-events-none opacity-50' : ''
+                  }`}
+                  onClick={() => handleSectionClick(section)}
+                >
+                  <h3 className="text-base font-semibold text-gray-700">
+                    {section.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-1 overflow-hidden text-ellipsis">
+                    {section.content}
+                  </p>
                 </div>
-              </div>
-
-              {/* Forward/Backward Navigation */}
-              {/* <div className="flex flex-row space-x-3">
-                <IoChevronBackCircle
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
-                  size={35}
-                />
-                <IoChevronForwardCircle
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
-                  size={35}
-                />
-              </div> */}
-
-              <SwitchTrl products={[productDetails]} />
+              ))}
             </div>
 
-            <h2 className="text-xl font-semibold text-primary mb-1">
-              Products Details
-            </h2>
-            <div className="flex flex-row bg-white border rounded-lg p-6 shadow-md items-center gap-8 mb-4">
-              {/* Progress Circle */}
-              <div className="flex items-center justify-center">
-                <div className="relative w-32 h-32">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    {/* Background Circle */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      stroke="#E5E7EB"
-                      strokeWidth="10"
-                      fill="none"
-                    />
-                    {/* Progress Circle */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      stroke="#4F46E5"
-                      strokeWidth="10"
-                      fill="none"
-                      strokeDasharray="282.74"
-                      strokeDashoffset={
-                        282.74 - (progressPercentage / 100) * 282.74
-                      }
-                      strokeLinecap="round"
-                      transform="rotate(-90 50 50)"
-                      className="transition-all duration-500 ease-in-out"
-                    />
-                  </svg>
-                  {/* Percentage Display */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-gray-800">
-                      {progressPercentage}%
-                    </span>
-                    <span className="text-xs text-gray-500 mt-1">
-                      Completed
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Information Cards */}
-              <div className="flex flex-row justify-between flex-grow gap-4">
-                {[
-                  {
-                    title: "Description",
-                    content: productDetails?.description,
-                    icon: (
-                      <svg
-                        className="w-5 h-5 text-indigo-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        ></path>
-                      </svg>
-                    ),
-                  },
-                  {
-                    title: "Problem Statement",
-                    content: productDetails?.problemStatement,
-                    icon: (
-                      <svg
-                        className="w-5 h-5 text-indigo-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        ></path>
-                      </svg>
-                    ),
-                  },
-                  {
-                    title: "Solution Expected",
-                    content: productDetails?.solutionExpected,
-                    icon: (
-                      <svg
-                        className="w-5 h-5 text-indigo-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        ></path>
-                      </svg>
-                    ),
-                  },
-                ].map((section, index) => (
+            {/* TRL Progress Bar */}
+            <div className="bg-white border rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4">
+                TRL Progress
+              </h2>
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-full bg-gray-200 rounded-full h-8">
                   <div
-                    key={index}
-                    className={`group flex flex-col flex-1 p-4 rounded-lg border border-gray-200 bg-gray-50 transition-all hover:bg-white hover:shadow-lg ${
-                      isAnyPopupOpen
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }`}
-                    onClick={() => handleSectionClick(section)}
-                  >
-                    <div className="flex items-center mb-2">
-                      <div className="p-1 rounded-md bg-indigo-100 mr-2">
-                        {section.icon}
-                      </div>
-                      <h3 className="text-base font-semibold text-gray-800">
-                        {section.title}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-3 flex-grow">
-                      {section.content || "Not specified"}
-                    </p>
-                  </div>
-                ))}
+                    className="bg-primary h-8 rounded-full"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-primary text-xl font-bold">
+                  {progressPercentage}%
+                </span>
               </div>
             </div>
 
@@ -478,7 +342,7 @@ export default function ProductDetails() {
               <div className="border rounded-lg overflow-hidden">
                 <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
                   <table className="w-full min-w-[600px] border-collapse">
-                    <thead className="bg-gray-600 text-gray-100 text-sm font-semibold sticky top-0 z-10">
+                    <thead className="bg-gray-100 text-black text-sm font-semibold sticky top-0 z-10">
                       <tr>
                         {[
                           "TRL Level",
@@ -513,7 +377,7 @@ export default function ProductDetails() {
                           }
                           className={`${
                             index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          } text-sm cursor-pointer hover:bg-gray-200 transition`}
+                          } text-sm cursor-pointer hover:bg-gray-300 transition`}
                         >
                           <td className="pl-4 py-3 whitespace-nowrap">
                             <div className="flex items-center space-x-2">
@@ -582,7 +446,10 @@ export default function ProductDetails() {
 
       {/* Move the Expand component here, outside the main content flow */}
       {selectedSection && (
-        <Expand title={selectedSection.title} onClose={handleExpandClose}>
+        <Expand
+          title={selectedSection.title}
+          onClose={handleExpandClose}
+        >
           <div className="mt-4 p-4">
             <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
               {selectedSection.content || "No content available"}

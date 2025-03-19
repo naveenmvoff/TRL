@@ -17,8 +17,6 @@ import { ObjectId } from "mongoose";
 import { connect } from "http2";
 import { NextRequest, NextResponse } from "next/server";
 import TrlLevelData from "@/models/trlLevelData";
-import SwitchTrl from '@/components/switch-trl';
-
 
 interface TRLItem {
   _id: string;
@@ -82,7 +80,6 @@ export default function ProductDetails() {
   const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
 
   const params = useParams();
-  console.log;
   const id = params.id as string;
   console.log("Product ID: ", id);
 
@@ -313,14 +310,12 @@ export default function ProductDetails() {
                     Home
                   </h1>
                   <MdOutlineArrowForwardIos size={20} />
-                  <h1 className="text-white hover:cursor-context-menu">
-                    TRL Level
-                  </h1>
+                  <h1 className="text-white hover:cursor-context-menu">TRL Level</h1>
                 </div>
               </div>
 
               {/* Forward/Backward Navigation */}
-              {/* <div className="flex flex-row space-x-3">
+              <div className="flex flex-row space-x-3">
                 <IoChevronBackCircle
                   className="text-gray-600 hover:text-gray-700 transition-colors"
                   size={35}
@@ -329,9 +324,7 @@ export default function ProductDetails() {
                   className="text-gray-600 hover:text-gray-700 transition-colors"
                   size={35}
                 />
-              </div> */}
-
-              <SwitchTrl products={[productDetails]} />
+              </div>
             </div>
 
             <h2 className="text-xl font-semibold text-primary mb-1">

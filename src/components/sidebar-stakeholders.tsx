@@ -31,11 +31,11 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
   };
 
   // Function to handle section change
-  const handleSectionChange = (section: string) => {
-    if (onSectionChange) {
-      onSectionChange(section);
-    }
-  };
+  // const handleSectionChange = (section: string) => {
+  //   if (onSectionChange) {
+  //     onSectionChange(section);
+  //   }
+  // };
 
   return (
     <div className="w-52 min-h-[calc(100vh-4rem)] border-r flex flex-col">

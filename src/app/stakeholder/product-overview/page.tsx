@@ -31,7 +31,10 @@ export default function ProductOverview() {
 
   console.log("products ", products);
   console.log("trlItemsData ", trlItemsData);
+  console.log("productProgressData ", productProgressData);
   // State for active section
+  const productCount = products?.length || 0;
+
   const [activeSection, setActiveSection] = useState<string>("overview");
 
   // Function to handle product selection
@@ -47,6 +50,7 @@ export default function ProductOverview() {
 
   // Function to change the active section
   const changeSection = (section: string) => {
+    console.log("ajgfsdjkshgdjkadgaa", section);
     setActiveSection(section);
   };
 
@@ -307,26 +311,57 @@ export default function ProductOverview() {
     trlItemsData: any[];
     progressData: any[];
   }) => {
-    // Keep existing data calculation
-    const data = progressData.length > 0
-      ? progressData.map((product) => ({
-          name: product.productName,
-          progress: product.completionPercentage,
-          levels: product.trlLevels.map((level: any) => ({
-            level: level.levelNumber,
-            completed: level.completedSublevels,
-            total: level.totalSublevels,
-          })),
-        }))
-      : [];
+    const [tooltipData, setTooltipData] = useState<any>(null);
+
+    // Unified click handler for both bar and tooltip
+    const handleClick = (data: any) => {
+      console.log("Clicked Product ID:", data.productID);
+      // Your navigation logic here
+    };
+
+    const CustomTooltip = ({ active, payload }: any) => {
+      if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+          <button
+            type="button"
+            className="bg-white p-4 border rounded shadow hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleClick(data);
+            }}
+            style={{ pointerEvents: "all" }}
+          >
+            <p className="font-bold text-primary  text-left">{`${data.name}`}</p>
+            <p className="text-[#f8572ebb] text-left">{`${data.progress}% Complete`}</p>
+            {/* <p className="text-xs text-blue-500 mt-1 text-left">
+              Click for details →
+            </p> */}
+          </button>
+        );
+      }
+      return null;
+    };
+
+    // Transform progress data into chart format
+    const chartData = progressData.map((product) => ({
+      name: product.productName,
+      progress: product.completionPercentage,
+      productID: product.productId,
+    }));
 
     return (
       <div className="w-full h-full">
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={data}>
+          <BarChart
+            data={chartData}
+            onClick={(data) =>
+              data && handleClick(data.activePayload?.[0]?.payload)
+            }
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
-            {/* Modified YAxis to show TRL levels on the left while maintaining percentage bars */}
             <YAxis
               yAxisId="left"
               orientation="left"
@@ -343,20 +378,33 @@ export default function ProductOverview() {
               yAxisId="right"
               orientation="right"
               domain={[0, 100]}
-              ticks={[0, 20, 40, 60, 80, 100]}
+              ticks={[]}
               tickFormatter={(value) => `${value}%`}
             />
             <Tooltip
-              formatter={(value, name, props) => {
-                return [`${value}% Complete`, "Progress"];
+              cursor={{ fill: "transparent" }}
+              content={CustomTooltip}
+              wrapperStyle={{
+                zIndex: 1000,
+                pointerEvents: "auto",
+                cursor: "pointer",
               }}
+              wrapperClassName="hover:bg-black"
             />
-            <Bar yAxisId="right" dataKey="progress" fill="#4f46e5" />
+            <Bar
+              yAxisId="right"
+              dataKey="progress"
+              fill="#4f46e5"
+              cursor="pointer"
+              onClick={(data) => handleClick(data)}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
     );
   };
+
+  console.log("activeSection", activeSection);
 
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
@@ -378,7 +426,7 @@ export default function ProductOverview() {
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Total Products Card */}
-                <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
+                {/* <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0 pb-2">
                     <h3 className="text-sm font-medium text-primary">
                       Total Products
@@ -386,13 +434,13 @@ export default function ProductOverview() {
                     <BarChart2 className="h-4 w-4 text-indigo-500" />
                   </div>
                   <div className="p-6 pt-0">
-                    <div className="text-2xl font-bold text-primary">8</div>
+                    <div className="text-2xl font-bold text-primary">{productCount}</div>
                     <p className="text-xs text-gray-500">+2 from last month</p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Average TRL Card */}
-                <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
+                {/* <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0 pb-2">
                     <h3 className="text-sm font-medium text-primary">
                       Average TRL
@@ -403,14 +451,12 @@ export default function ProductOverview() {
                     <div className="text-2xl font-bold text-primary">
                       {averageTRL}
                     </div>
-                    <p className="text-xs text-gray-500">
-                      +0.8 from last quarter
-                    </p>
+                    <p className="text-xs text-gray-500">+0.8 from last quarter</p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Product Managers Card */}
-                <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
+                {/* <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0 pb-2">
                     <h3 className="text-sm font-medium text-primary">
                       Product Managers
@@ -421,10 +467,10 @@ export default function ProductOverview() {
                     <div className="text-2xl font-bold text-primary">8</div>
                     <p className="text-xs text-gray-500">+1 from last month</p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Product Factories Card */}
-                <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
+                {/* <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0 pb-2">
                     <h3 className="text-sm font-medium text-primary">
                       Product Factories
@@ -435,7 +481,7 @@ export default function ProductOverview() {
                     <div className="text-2xl font-bold text-primary">8</div>
                     <p className="text-xs text-gray-500">Same as last month</p>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Product Overview Chart */}
@@ -450,13 +496,13 @@ export default function ProductOverview() {
                     {/* Product Chart */}
                     <div className="w-full h-[400px] flex flex-col">
                       {!trlLevels || !products || !trlItemsData ? (
-                        <div className="flex items-center justify-center h-full">
-                          <p className="text-gray-500">Loading chart data...</p>
+                        <div className="flex items-center justify-center h-full" >
+                          <p className="text-primary">Loading chart data...</p>
                         </div>
                       ) : (
                         <TrlProgressChart
-                          products={products}
-                          trlItemsData={trlItemsData}
+                          // products={products}
+                          // trlItemsData={trlItemsData}
                           progressData={productProgressData}
                         />
                       )}
@@ -464,344 +510,6 @@ export default function ProductOverview() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Products Section */}
-          {activeSection === "products" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <button
-                    className="inline-flex items-center justify-center rounded-md font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-300 px-3 py-1 text-sm h-8"
-                    onClick={() => {
-                      // Refresh products data
-                      if (Session?.user?.id) {
-                        setIsLoading(true);
-                        fetch(
-                          `/api/stakeholder/products?userID=${Session.user.id}`
-                        )
-                          .then((response) => response.json())
-                          .then((data) => {
-                            if (data.success) {
-                              setProducts(data.products);
-                              if (
-                                data.products &&
-                                data.products.length > 0 &&
-                                recivedProductIDs.length === 0
-                              ) {
-                                setRecivedProductIDs([data.products[0]._id]);
-                              }
-                            }
-                            setIsLoading(false);
-                          })
-                          .catch((error) => {
-                            console.error("Error refreshing products:", error);
-                            setIsLoading(false);
-                          });
-                      }
-                    }}
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4 text-indigo-500" />
-                    Refresh
-                  </button>
-                  <button className="inline-flex items-center justify-center rounded-md font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-300 px-3 py-1 text-sm h-8">
-                    <Download className="mr-2 h-4 w-4 text-indigo-500" />
-                    Export
-                  </button>
-                </div>
-              </div>
-
-              {/* Products Table Card */}
-              <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="p-6 pb-3">
-                  <h3 className="text-lg font-medium text-primary">
-                    Product List
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    All products assigned to {Session?.user?.name}
-                  </p>
-                </div>
-                <div className="p-0">
-                  {/* Products Table */}
-                  <div className="rounded-lg overflow-hidden border-t">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead className="text-xs uppercase bg-gray-50 text-gray-500 border-b">
-                          <tr>
-                            <th className="px-6 py-3 font-medium">
-                              <div className="flex items-center">
-                                <span>Product</span>
-                              </div>
-                            </th>
-                            <th className="px-6 py-3 font-medium">
-                              Description
-                            </th>
-                            <th className="px-6 py-3 font-medium">TRL Level</th>
-                            <th className="px-6 py-3 font-medium">
-                              Created Date
-                            </th>
-                            <th className="px-6 py-3 font-medium">
-                              <span className="sr-only">Select</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {products?.map((product) => {
-                            const isSelected = recivedProductIDs.includes(
-                              product._id
-                            );
-                            // Find highest TRL level for this product
-                            const productTrlItems =
-                              trlItemsData?.filter(
-                                (item) => item.productId === product._id
-                              ) || [];
-
-                            const highestTrlLevel =
-                              productTrlItems.length > 0
-                                ? Math.max(
-                                    ...productTrlItems.map(
-                                      (item) => item.TrlLevelNumber
-                                    )
-                                  )
-                                : 0;
-
-                            return (
-                              <tr
-                                key={product._id}
-                                className={`hover:bg-gray-50 ${
-                                  isSelected
-                                    ? "bg-indigo-50 hover:bg-indigo-100"
-                                    : ""
-                                }`}
-                              >
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {product.product}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-gray-500 max-w-xs truncate">
-                                    {product.description}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-500">
-                                    {highestTrlLevel > 0
-                                      ? `Level ${highestTrlLevel}`
-                                      : "Not assigned"}
-                                  </div>
-                                  {/* Add TRL Progress bar */}
-                                  {productProgressData.length > 0 && (
-                                    <div className="mt-1">
-                                      {(() => {
-                                        const productProgress =
-                                          productProgressData.find(
-                                            (p) => p.productId === product._id
-                                          );
-                                        if (productProgress) {
-                                          return (
-                                            <div className="w-full">
-                                              <div className="flex justify-between text-xs mb-1">
-                                                <span>
-                                                  {
-                                                    productProgress.completedSublevels
-                                                  }
-                                                  /
-                                                  {
-                                                    productProgress.totalSublevels
-                                                  }{" "}
-                                                  complete
-                                                </span>
-                                                <span>
-                                                  {
-                                                    productProgress.completionPercentage
-                                                  }
-                                                  %
-                                                </span>
-                                              </div>
-                                              <div className="h-1.5 w-full bg-gray-200 rounded-full">
-                                                <div
-                                                  className="h-1.5 bg-indigo-600 rounded-full"
-                                                  style={{
-                                                    width: `${productProgress.completionPercentage}%`,
-                                                  }}
-                                                ></div>
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                        return null;
-                                      })()}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {new Date(
-                                    product.createdAt
-                                  ).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    onClick={() =>
-                                      handleProductSelection(product._id)
-                                    }
-                                    className={`px-3 py-1 rounded-md ${
-                                      isSelected
-                                        ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                                        : "text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
-                                    }`}
-                                  >
-                                    {isSelected ? "Selected" : "Select"}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TRL Details Card */}
-              {recivedProductIDs.length > 0 && (
-                <div className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <div className="p-6 pb-2">
-                    <h3 className="text-lg font-medium text-primary">
-                      TRL Progress Details -{" "}
-                      {
-                        products?.find((p) => recivedProductIDs.includes(p._id))
-                          ?.product
-                      }
-                    </h3>
-                  </div>
-                  <div className="p-6 pt-0">
-                    <div className="space-y-6">
-                      {!trlItemsData || trlItemsData.length === 0 ? (
-                        <div className="text-center p-6">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            No TRL data found
-                          </h3>
-                          <p className="mt-2 text-sm text-gray-500">
-                            This product doesn't have any TRL assessments yet.
-                          </p>
-                        </div>
-                      ) : (
-                        trlItemsData.map((trlItem) => (
-                          <div
-                            key={trlItem._id}
-                            className="p-4 border rounded-lg hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="font-medium text-lg">
-                                  TRL Level {trlItem.TrlLevelNumber}
-                                </h4>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {trlItem.TrlLevelName}
-                                </p>
-                              </div>
-                              <div className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-semibold">
-                                {trlItem.status}
-                              </div>
-                            </div>
-
-                            <div className="mt-4">
-                              <h5 className="text-sm font-medium text-gray-700">
-                                Progress
-                              </h5>
-                              <div className="mt-1 h-2 w-full bg-gray-200 rounded-full">
-                                <div
-                                  className="h-2 bg-indigo-600 rounded-full"
-                                  style={{
-                                    width: `${
-                                      // trlItem.status === "Completed"
-                                      trlItem.status?.toLowerCase() === "completed"
-                                        ? 100
-                                        // : trlItem.status === "In Progress"
-                                        : trlItem.status?.toLowerCase() === "progress" ||
-                                        trlItem.status?.toLowerCase() === "in progress"
-                                        ? 50
-                                        : 0
-                                    }%`,
-                                  }}
-                                ></div>
-                              </div>
-                              {/* Show sublevel progress info */}
-                              {(() => {
-                                const productProgress = productProgressData.find(
-                                  p => p.productId === trlItem.productId
-                                );
-                                if (productProgress) {
-                                  const levelProgress = productProgress.trlLevels.find(
-                                    (l: any) => l.levelId === trlItem.trlLevelId
-                                  );
-                                  if (levelProgress) {
-                                    const levelPercentage = levelProgress.totalSublevels > 0
-                                      ? Math.round((levelProgress.completedSublevels / levelProgress.totalSublevels) * 100)
-                                      : 0;
-                                    return (
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        {levelProgress.completedSublevels}/{levelProgress.totalSublevels} sublevels complete ({levelPercentage}%)
-                                      </div>
-                                    );
-                                  }
-                                }
-                                return null;
-                              })()}
-                            </div>
-
-                            {trlItem.documentName && (
-                              <p className="mt-3 text-sm">
-                                <span className="font-medium">
-                                  Documentation:
-                                </span>{" "}
-                                <a
-                                  href={trlItem.documentLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-indigo-600 hover:text-indigo-800"
-                                >
-                                  View Documentation
-                                </a>
-                              </p>
-                            )}
-
-                            {(trlItem.startDate || trlItem.estimatedDate) && (
-                              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                                {trlItem.startDate && (
-                                  <div>
-                                    <span className="font-medium">
-                                      Start Date:
-                                    </span>{" "}
-                                    {new Date(
-                                      trlItem.startDate
-                                    ).toLocaleDateString()}
-                                  </div>
-                                )}
-                                {trlItem.estimatedDate && (
-                                  <div>
-                                    <span className="font-medium">
-                                      Estimated Completion:
-                                    </span>{" "}
-                                    {new Date(
-                                      trlItem.estimatedDate
-                                    ).toLocaleDateString()}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ import { BiDetail } from "react-icons/bi";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import SwitchTrl from '@/components/switch-trl';
 
 interface TechFlowItem {
   id: string;
@@ -35,7 +36,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     <div className="p-6 bg-secondary min-h-full">
       {/* User Info Section */}
       <div className="bg-white rounded-md p-6 mb-4 shadow-sm">
-        <h2 className="text-black font-bold mb-1 ">Hello, {userName}</h2>
+        <h2 className="text-xl font-bold tracking-tight text-primary mb-1">Hello, {userName}</h2>
         {/* <h2 className="text-black font-medium mb-4">PMID, {PMID}</h2> */}
         <div className="space-y-2 text-sm">
           <div className="flex">
@@ -54,7 +55,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       </div>
 
       {/* TechFlow Items Section */}
-      <div className="bg-white rounded-md p-6 pr-8 shadow-sm">
+      {/* <div className="bg-white rounded-md p-6 pr-8 shadow-sm">
         {productsData && productsData.length > 0 ? (
           productsData.map((item, index) => (
             <div
@@ -74,14 +75,6 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                     {item.description || "No description available"}
                   </p>
                 </div>
-                {/* <div className="flex space-x-2">
-                  <button className="text-indigo-600 hover:text-indigo-800">
-                    <BiEditAlt className="w-7 h-7"/>
-                  </button>
-                  <button className="text-indigo-600 hover:text-indigo-800">
-                    <BiDetail className="w-7 h-7"/>
-                  </button>
-                </div> */}
               </div>
               {index < productsData.length - 1 && (
                 <div className="border-b border-gray-200"></div>
@@ -91,6 +84,64 @@ const ProductDetails: FC<ProductDetailsProps> = ({
         ) : (
           <div className="text-center py-4 text-gray-500">
             No products are currently assigned to you!
+          </div>
+        )}
+      </div> */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {productsData && productsData.length > 0 ? (
+          productsData.map((item, index) => (
+            <div
+              key={item._id || index}
+              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-lg hover:scale-105 hover:bg-gray-100 hover:z-10 transition-all duration-300 ease-in-out cursor-pointer"
+              onClick={() =>
+                router.push(`/productManager/product-details/${item._id}`)
+              }
+            >
+              <div className="pb-3">
+                <h2 className="text-xl font-bold text-indigo-600">
+                  {item.product || "No Product Name"}
+                </h2>
+              </div>
+
+              <div className="pb-1">
+                <h3 className="text-md font-semibold text-gray-700">
+                  Description
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 whitespace-pre-line line-clamp-1 text-justify">
+                  {item.description || "No description available"}
+                </p>
+              </div>
+              <div className="pb-1">
+                <h3 className="text-md font-semibold text-gray-700">
+                  Problem Statement
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 whitespace-pre-line line-clamp-1 text-justify">
+                  {item.problemStatement || "No description available"}
+                </p>
+              </div>
+              <div className="pb-1">
+                <h3 className="text-md font-semibold text-gray-700">
+                  Expected Solution
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 whitespace-pre-line line-clamp-1 text-justify">
+                  {item.solutionExpected || "No description available"}
+                </p>
+              </div>
+
+              <div className="pt-4 mt-2">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <div>
+                    Created:{" "}
+                    {new Date(item.createdAt).toLocaleDateString("en-GB")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-500 bg-white rounded-lg">
+            <p>No products are currently assigned to you!</p>
           </div>
         )}
       </div>
@@ -114,6 +165,7 @@ export default function productManager() {
   const [isLoading, setIsLoading] = useState(true);
 
   console.log("productData********", productData);
+  console.log("DataToSend**", productData?.products);
   const PMID = Session?.user?.id;
   console.log("PMID: ", PMID);
 
@@ -166,6 +218,7 @@ export default function productManager() {
             factoryNumber={Session?.user?.factory || "Not assigned"}
             productsData={productData?.products || []}
           />
+          <SwitchTrl products={productData?.products} />
         </div>
       </div>
     </div>
