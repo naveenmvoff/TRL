@@ -32,6 +32,11 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   if (!productsData) return <div>Loading...</div>; // Add loading state
   const router = useRouter();
 
+  const handleProductClick = (productId: string, index: number) => {
+    localStorage.setItem('currentProductIndex', index.toString());
+    router.push(`/productManager/product-details/${productId}`);
+  };
+
   return (
     <div className="p-6 bg-secondary min-h-full">
       {/* User Info Section */}
@@ -54,49 +59,13 @@ const ProductDetails: FC<ProductDetailsProps> = ({
         </div>
       </div>
 
-      {/* TechFlow Items Section */}
-      {/* <div className="bg-white rounded-md p-6 pr-8 shadow-sm">
-        {productsData && productsData.length > 0 ? (
-          productsData.map((item, index) => (
-            <div
-              key={item._id || index}
-              className="mb-4 bg-slate-100 p-4 rounded-lg shadow-sm hover:bg-slate-200 cursor-pointer"
-              // onClick={() => window.location.href = `/productManager/product-details/${item._id}`}
-              onClick={() =>
-                router.push(`/productManager/product-details/${item._id}`)
-              }
-            >
-              <div className="flex justify-between py-2 items-center">
-                <div className="pr-2">
-                  <h3 className="font-semibold text-gray-800">
-                    {item.product || "No Product Name"}
-                  </h3>
-                  <p className="text-sm font-normal text-gray-800 line-clamp-2 text-justify mx-2">
-                    {item.description || "No description available"}
-                  </p>
-                </div>
-              </div>
-              {index < productsData.length - 1 && (
-                <div className="border-b border-gray-200"></div>
-              )}
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            No products are currently assigned to you!
-          </div>
-        )}
-      </div> */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {productsData && productsData.length > 0 ? (
           productsData.map((item, index) => (
             <div
               key={item._id || index}
               className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-lg hover:scale-105 hover:bg-gray-100 hover:z-10 transition-all duration-300 ease-in-out cursor-pointer"
-              onClick={() =>
-                router.push(`/productManager/product-details/${item._id}`)
-              }
+              onClick={() => handleProductClick(item._id, index)}
             >
               <div className="pb-3">
                 <h2 className="text-xl font-bold text-indigo-600">
@@ -162,41 +131,62 @@ export default function productManager() {
     products: any[];
   }
   const [productData, setProductData] = useState<ProductData | null>(null);
+  const [productIds, setProductIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   console.log("productData********", productData);
-  console.log("DataToSend**", productData?.products);
   const PMID = Session?.user?.id;
   console.log("PMID: ", PMID);
 
   useEffect(() => {
+    // Add overflow hidden to prevent page scrollbar
+    document.body.style.overflow = 'hidden';
+    
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
+    // Try to load product IDs from localStorage
+    const savedIds = localStorage.getItem('dashboardProductIds');
+    if (savedIds) {
+        setProductIds(JSON.parse(savedIds));
+    }
+
     const fetchPMData = async () => {
-      setIsLoading(true);
-      if (PMID) {
-        try {
-          const response = await fetch(
-            `/api/product-manager/pm?id=${Session.user.id}`
-          );
-          const data = await response.json();
-          setProductData(data);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setIsLoading(false);
+        setIsLoading(true);
+        if (PMID) {
+            try {
+                const response = await fetch(`/api/product-manager/pm?id=${Session.user.id}`);
+                const data = await response.json();
+                setProductData(data);
+                
+                // Extract and save product IDs in order
+                const ids = data.products.map((product: any) => product._id);
+                setProductIds(ids);
+                localStorage.setItem('dashboardProductIds', JSON.stringify(ids));
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
-      }
     };
 
-    fetchPMData();
+    if (!savedIds || PMID) {
+        fetchPMData();
+    }
   }, [Session]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white w-full overflow-hidden">
+      <div className="h-screen w-full overflow-hidden bg-white">
         <NavBar role="Product Manager" />
-        <div className="flex h-[calc(100vh-4rem)]">
+        <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
           <SidebarPM />
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <LoadingSpinner />
           </div>
         </div>
@@ -205,9 +195,9 @@ export default function productManager() {
   }
 
   return (
-    <div className="min-h-screen bg-white w-full overflow-hidden">
+    <div className="h-screen w-full overflow-hidden bg-white">
       <NavBar role="Product Manager" />
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
         {" "}
         {/* 4rem = Navbar height */}
         <SidebarPM />
@@ -218,7 +208,7 @@ export default function productManager() {
             factoryNumber={Session?.user?.factory || "Not assigned"}
             productsData={productData?.products || []}
           />
-          <SwitchTrl products={productData?.products} />
+          <SwitchTrl productIds={productIds} />
         </div>
       </div>
     </div>

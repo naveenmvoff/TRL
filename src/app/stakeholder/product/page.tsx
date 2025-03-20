@@ -5,16 +5,48 @@ import Sidebar from "@/components/sidebar-stakeholders";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Search, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+interface Product {
+  _id: string;
+  userID: string;
+  product: string;
+  productManagerID: string;
+  productViewer: string[];
+  description: string;
+  problemStatement: string;
+  solutionExpected: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 
 export default function ProductPage() {
   const { data: Session } = useSession();
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<any[] | null>(null);
+  const [products, setProducts] = useState<Product[] | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<any[] | null>(null);
   const [productManagers, setProductManagers] = useState<
     Record<string, string>
   >({});
+  const [productIds, setProductIds] = useState<string[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!products) return;
+
+    const ids = products.map((product) => product._id);
+    setProductIds(ids);
+    console.log("Mapped Product IDs:", ids); // Add this line to debug
+  }, [products]);
+
+  useEffect(() => {
+    if (productIds.length > 0) {
+      console.log("Product IDs array:", productIds);
+      console.log("Number of IDs:", productIds.length);
+    }
+  }, [productIds]);
 
   // Fetch products for the user
   useEffect(() => {
@@ -100,6 +132,17 @@ export default function ProductPage() {
     fetchProductManagers();
   }, [filteredProducts]);
 
+  // Add this function to handle navigation
+  const handleProductClick = (productId: string) => {
+    try {
+      if (typeof window !== 'undefined') {
+        router.push(`/stakeholder/product/${productId}`);
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white w-full overflow-hidden">
@@ -138,7 +181,7 @@ export default function ProductPage() {
                 <div
                   key={product._id}
                   className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-lg hover:scale-105 hover:bg-gray-100 hover:z-20 transition-all duration-300 ease-in-out cursor-pointer"
-                  onClick={() => console.log(product._id)}
+                  onClick={() => handleProductClick(product._id)}
                 >
                   <div className="border-b pb-4">
                     <h2 className="text-xl font-bold text-indigo-600 mb-1">

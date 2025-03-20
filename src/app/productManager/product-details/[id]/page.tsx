@@ -12,13 +12,12 @@ import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-pm";
 import Expand from "@/components/expand"; // Add this import
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { ObjectId } from "mongoose";
 import { connect } from "http2";
 import { NextRequest, NextResponse } from "next/server";
 import TrlLevelData from "@/models/trlLevelData";
-import SwitchTrl from '@/components/switch-trl';
-
+import SwitchTrl from "@/components/switch-trl";
 
 interface TRLItem {
   _id: string;
@@ -57,11 +56,66 @@ const LoadingSpinner = () => (
   </div>
 );
 
-export default function ProductDetails() {
+// Helper functions
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const calculateOverallStatus = (levelDetails: any[]) => {
+  if (!levelDetails || levelDetails.length === 0) return "Pending";
+
+  const hasCompleted = levelDetails.some(
+    (detail) => detail.status === "Completed"
+  );
+  const hasInProgress = levelDetails.some(
+    (detail) => detail.status === "In Progress"
+  );
+  const allCompleted = levelDetails.every(
+    (detail) => detail.status === "Completed"
+  );
+
+  if (allCompleted) return "Completed";
+  if (hasInProgress || hasCompleted) return "In Progress";
+  return "Pending";
+};
+
+export default function ProductDetails({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const clientSideParams = useParams();
+  const pathname = usePathname();
+
   const [isLoading, setIsLoading] = useState(true);
   const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
-  console.log("TRL Master Items: ", trlItems);
+  const [productIds, setProductIds] = useState<string[]>([]);
+
+  const [productId, setProductId] = useState<string>(() => {
+    if (clientSideParams && typeof clientSideParams.id === "string") {
+      return clientSideParams.id;
+    }
+    return params.id;
+  });
+
+  useEffect(() => {
+    if (clientSideParams && typeof clientSideParams.id === "string") {
+      setProductId(clientSideParams.id);
+    }
+  }, [pathname, clientSideParams]);
+
+  useEffect(() => {
+    // Add overflow hidden to prevent page scrollbar
+    document.body.style.overflow = 'hidden';
+    
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const completedItems = trlItems.filter(
     (item) => item.status === "Completed"
@@ -81,169 +135,142 @@ export default function ProductDetails() {
 
   const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
 
-  const params = useParams();
-  console.log;
-  const id = params.id as string;
-  console.log("Product ID: ", id);
+  console.log("Product ID: ", productId);
 
-  // Add this helper function at the top of your component
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  // Add this function before the component
-  const calculateOverallStatus = (levelDetails: any[]) => {
-    if (!levelDetails || levelDetails.length === 0) return "Pending";
-
-    const hasCompleted = levelDetails.some(
-      (detail) => detail.status === "Completed"
-    );
-    const hasInProgress = levelDetails.some(
-      (detail) => detail.status === "In Progress"
-    );
-    const allCompleted = levelDetails.every(
-      (detail) => detail.status === "Completed"
-    );
-
-    if (allCompleted) return "Completed";
-    if (hasInProgress || hasCompleted) return "In Progress";
-    return "Pending";
-  };
-
-  // // =============GET TRL MASTER DETAILS from TRL MASTER Schema===============
   useEffect(() => {
-    const trlMasterData = async () => {
-      console.log("Inside TRL Master Data - PM");
+    if (!productId) return;
 
-      try {
-        const response = await fetch("/api/trl");
-        console.log("ItrlMD - Got responce");
-        const data = await response.json();
-        console.log("TRL Master Data=====", data);
-        if (data.success) {
-          setTrlItems(
-            data.data.map((item: any) => ({
-              _id: item._id,
-              TrlLevelNumber: item.trlLevelNumber,
-              trlLevelName: item.trlLevelName,
-              subLevels: item.subLevels,
-              status: "Pending", // or however you determine status
-            }))
-          );
-        } else {
-          console.error("Failed to fetch TRL details:", data.error);
-        }
-      } catch (error) {
-        console.log("Unable to GET TRL Details", error);
-        return Response.json(
-          {
-            success: false,
-            error: "Failed to fetch TRL details",
-          },
-          { status: 500 }
-        );
-      }
-    };
-    trlMasterData();
-  }, [id]);
-
-  // // =============GET PRODUCT DETAILS ONLY ===============
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      if (!id) return;
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        console.log("Product ID in Request: ", id);
-        const response = await fetch(`/api/product-manager/product?id=${id}`);
-        console.log("ProductDetails - Got responce", response);
-        const data = await response.json();
-        console.log("ProductDetails : ", data);
-        setProductDetails(data);
-      } catch (error) {
-        console.error("Error fetching product details:", error);
-      }
-    };
-
-    fetchProductDetails();
-  }, [id]);
-
-  // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
-  useEffect(() => {
-    const fetchTrlDetails = async () => {
-      if (!id) return;
-      try {
-        // First fetch master data
-        const masterResponse = await fetch("/api/trl");
-        const masterData = await masterResponse.json();
-
-        // Then fetch level details
-        const detailsResponse = await fetch(`/api/trl-level?productId=${id}`);
-        const detailsData = await detailsResponse.json();
-
-        if (masterData.success && detailsData.success) {
-          // Combine the data
-          const combinedData = masterData.data.map((masterItem: any) => {
-            // Find all sublevels details for this TRL level
-            const levelDetails = detailsData.data.filter(
-              (detail: any) => detail.trlLevelId === masterItem._id
-            );
-
-            // Sort sublevels by their number
-            const sortedSubLevels = masterItem.subLevels?.sort(
-              (a: any, b: any) => a.subLevelNumber - b.subLevelNumber
-            );
-
-            // Find first sublevel details
-            const firstSubLevel = sortedSubLevels?.[0];
-            const firstSubLevelDetails = firstSubLevel
-              ? levelDetails.find(
-                  (d: any) => d.subLevelId === firstSubLevel._id
-                )
-              : null;
-
-            // Find last sublevel details
-            const lastSubLevel = sortedSubLevels?.[sortedSubLevels.length - 1];
-            const lastSubLevelDetails = lastSubLevel
-              ? levelDetails.find((d: any) => d.subLevelId === lastSubLevel._id)
-              : null;
-
-            return {
-              _id: masterItem._id,
-              TrlLevelNumber: masterItem.trlLevelNumber,
-              trlLevelName: masterItem.trlLevelName,
-              subLevels: masterItem.subLevels,
-              description: firstSubLevelDetails?.description || "",
-              status: calculateOverallStatus(levelDetails),
-              documentationLink: firstSubLevelDetails?.documentationLink || "",
-              otherNotes: firstSubLevelDetails?.otherNotes || "",
-              demoRequired: firstSubLevelDetails?.demoRequired || false,
-              demoStatus: firstSubLevelDetails?.demoStatus || "",
-              // Use first sublevel's start date
-              startDate: firstSubLevelDetails?.startDate || "",
-              // Use last sublevel's estimated and extended dates
-              estimatedDate: lastSubLevelDetails?.estimatedDate || "",
-              extendedDate: lastSubLevelDetails?.extendedDate || "",
-            };
-          });
-
-          setTrlItems(combinedData);
-          setIsLoading(false);
+        const savedIds = localStorage.getItem("dashboardProductIds");
+        if (savedIds) {
+          setProductIds(JSON.parse(savedIds));
         }
+
+        await Promise.all([
+          fetchTrlMasterData(),
+          fetchProductDetails(),
+          fetchTrlDetails(),
+        ]);
       } catch (error) {
-        console.error("Error fetching TRL data:", error);
+        console.error("Error fetching data:", error);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTrlDetails();
-  }, [id]);
+    fetchData();
+  }, [productId]);
 
+  const fetchTrlMasterData = async () => {
+    console.log("Inside TRL Master Data - PM");
+
+    try {
+      const response = await fetch("/api/trl");
+      console.log("ItrlMD - Got responce");
+      const data = await response.json();
+      console.log("TRL Master Data=====", data);
+      if (data.success) {
+        setTrlItems(
+          data.data.map((item: any) => ({
+            _id: item._id,
+            TrlLevelNumber: item.trlLevelNumber,
+            trlLevelName: item.trlLevelName,
+            subLevels: item.subLevels,
+            status: "Pending", // or however you determine status
+          }))
+        );
+      } else {
+        console.error("Failed to fetch TRL details:", data.error);
+      }
+    } catch (error) {
+      console.log("Unable to GET TRL Details", error);
+      return Response.json(
+        {
+          success: false,
+          error: "Failed to fetch TRL details",
+        },
+        { status: 500 }
+      );
+    }
+  };
+
+  const fetchProductDetails = async () => {
+    if (!productId) return;
+    setIsLoading(true);
+    try {
+      console.log("Product ID in Request: ", productId);
+      const response = await fetch(
+        `/api/product-manager/product?id=${productId}`
+      );
+      console.log("ProductDetails - Got responce", response);
+      const data = await response.json();
+      console.log("ProductDetails : ", data);
+      setProductDetails(data);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+    }
+  };
+
+  const fetchTrlDetails = async () => {
+    if (!productId) return;
+    try {
+      const masterResponse = await fetch("/api/trl");
+      const masterData = await masterResponse.json();
+
+      const detailsResponse = await fetch(
+        `/api/trl-level?productId=${productId}`
+      );
+      const detailsData = await detailsResponse.json();
+
+      if (masterData.success && detailsData.success) {
+        const combinedData = masterData.data.map((masterItem: any) => {
+          const levelDetails = detailsData.data.filter(
+            (detail: any) => detail.trlLevelId === masterItem._id
+          );
+
+          const sortedSubLevels = masterItem.subLevels?.sort(
+            (a: any, b: any) => a.subLevelNumber - b.subLevelNumber
+          );
+
+          const firstSubLevel = sortedSubLevels?.[0];
+          const firstSubLevelDetails = firstSubLevel
+            ? levelDetails.find((d: any) => d.subLevelId === firstSubLevel._id)
+            : null;
+
+          const lastSubLevel = sortedSubLevels?.[sortedSubLevels.length - 1];
+          const lastSubLevelDetails = lastSubLevel
+            ? levelDetails.find((d: any) => d.subLevelId === lastSubLevel._id)
+            : null;
+
+          return {
+            _id: masterItem._id,
+            TrlLevelNumber: masterItem.trlLevelNumber,
+            trlLevelName: masterItem.trlLevelName,
+            subLevels: masterItem.subLevels,
+            description: firstSubLevelDetails?.description || "",
+            status: calculateOverallStatus(levelDetails),
+            documentationLink: firstSubLevelDetails?.documentationLink || "",
+            otherNotes: firstSubLevelDetails?.otherNotes || "",
+            demoRequired: firstSubLevelDetails?.demoRequired || false,
+            demoStatus: firstSubLevelDetails?.demoStatus || "",
+            startDate: firstSubLevelDetails?.startDate || "",
+            estimatedDate: lastSubLevelDetails?.estimatedDate || "",
+            extendedDate: lastSubLevelDetails?.extendedDate || "",
+          };
+        });
+
+        setTrlItems(combinedData);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching TRL data:", error);
+      setIsLoading(false);
+    }
+  };
+
+  
   const handleTRLClick = (
     productId: string,
     trlId: string,
@@ -272,13 +299,17 @@ export default function ProductDetails() {
     setIsAnyPopupOpen(false);
   };
 
+  const handleIndexChange = (index: number, newProductId: string) => {
+    router.push(`/productManager/product-details/${newProductId}`);
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white w-full overflow-hidden">
+      <div className="h-screen w-full overflow-hidden bg-white">
         <NavBar role="Product Manager" />
-        <div className="flex h-[calc(100vh-4rem)]">
+        <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
           <Sidebar />
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <LoadingSpinner />
           </div>
         </div>
@@ -287,24 +318,23 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="relative min-h-screen bg-white">
-      {/* Use z-index to ensure proper stacking */}
-      <NavBar role="Product Manager" className="z-10" />
-      <div className="flex flex-col sm:flex-row relative z-0">
+    <div className="h-screen w-full overflow-hidden bg-white">
+      <NavBar role="Product Manager" />
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
         <Sidebar />
-        <div className="flex-1 flex justify-center bg-secondary">
-          <div className="mt-5 w-full max-w-full px-4 sm:px-6">
+        <div className="flex-grow overflow-y-auto bg-secondary">
+          <main className="p-6">
             <div className="flex flex-row items-center justify-between space-x-4 mb-4">
               <div className="flex items-center gap-2">
-                {/* Back Arrow Button */}
+              
                 <IoArrowBackCircle
-                  // onClick={() => router.back()}
-                  onClick={() => router.push(`/productManager/dashboard`)}
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
+                
+                onClick={() => router.push(`/productManager/dashboard`)}
+                  className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
                   size={35}
                 />
 
-                {/* Navigation Section - Closer to Back Arrow */}
+
                 <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
                   <h1
                     className="text-gray-200 hover:cursor-pointer transition-all"
@@ -319,30 +349,21 @@ export default function ProductDetails() {
                 </div>
               </div>
 
-              {/* Forward/Backward Navigation */}
-              {/* <div className="flex flex-row space-x-3">
-                <IoChevronBackCircle
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
-                  size={35}
-                />
-                <IoChevronForwardCircle
-                  className="text-gray-600 hover:text-gray-700 transition-colors"
-                  size={35}
-                />
-              </div> */}
-
-              <SwitchTrl products={[productDetails]} />
+              <SwitchTrl
+                productIds={productIds}
+                onIndexChange={handleIndexChange}
+              />
             </div>
 
             <h2 className="text-xl font-semibold text-primary mb-1">
-              Products Details
+              {productDetails?.product || "No Product Name"}
             </h2>
             <div className="flex flex-row bg-white border rounded-lg p-6 shadow-md items-center gap-8 mb-4">
-              {/* Progress Circle */}
+              
               <div className="flex items-center justify-center">
                 <div className="relative w-32 h-32">
                   <svg className="w-full h-full" viewBox="0 0 100 100">
-                    {/* Background Circle */}
+              
                     <circle
                       cx="50"
                       cy="50"
@@ -351,7 +372,7 @@ export default function ProductDetails() {
                       strokeWidth="10"
                       fill="none"
                     />
-                    {/* Progress Circle */}
+                
                     <circle
                       cx="50"
                       cy="50"
@@ -368,7 +389,7 @@ export default function ProductDetails() {
                       className="transition-all duration-500 ease-in-out"
                     />
                   </svg>
-                  {/* Percentage Display */}
+              
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-3xl font-bold text-gray-800">
                       {progressPercentage}%
@@ -380,7 +401,7 @@ export default function ProductDetails() {
                 </div>
               </div>
 
-              {/* Information Cards */}
+             
               <div className="flex flex-row justify-between flex-grow gap-4">
                 {[
                   {
@@ -469,7 +490,7 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* TRL Work Flow Table */}
+    
             <div className="bg-white border rounded-lg p-6 mb-4">
               <h2 className="text-lg font-semibold text-primary mb-4">
                 TRL Work Flow
@@ -487,7 +508,7 @@ export default function ProductDetails() {
                           "Estimated Date",
                           "Extended Date",
                           "Status",
-                          // "Actions",
+       
                         ].map((header) => (
                           <th
                             key={header}
@@ -504,7 +525,7 @@ export default function ProductDetails() {
                           key={item._id}
                           onClick={() =>
                             handleTRLClick(
-                              id,
+                              productId,
                               item._id,
                               item.trlLevelName || "",
                               item.TrlLevelNumber || 0,
@@ -525,9 +546,7 @@ export default function ProductDetails() {
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap font-medium">
                             {item.trlLevelName}
-                            {/* <div className="text-xs text-gray-500">
-                              {item.description}
-                            </div> */}
+         
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
                             {formatDate(item.startDate)}
@@ -552,18 +571,10 @@ export default function ProductDetails() {
                               <span className="text-xs font-medium">
                                 {item.status}
                               </span>
-                              {/* {item.demoRequired && (
-                                <span className="ml-2 text-xs text-blue-600">
-                                  Demo {item.demoStatus}
-                                </span>
-                              )} */}
+        
                             </div>
                           </td>
-                          {/* <td className="pl-4 py-3 whitespace-nowrap">
-                            <button className="text-primary hover:text-primary2 transition">
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          </td> */}
+       
                         </tr>
                       ))}
                     </tbody>
@@ -576,19 +587,24 @@ export default function ProductDetails() {
                 </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
 
-      {/* Move the Expand component here, outside the main content flow */}
       {selectedSection && (
-        <Expand title={selectedSection.title} onClose={handleExpandClose}>
-          <div className="mt-4 p-4">
-            <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
-              {selectedSection.content || "No content available"}
-            </p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[90vh] overflow-hidden">
+            <div className="max-h-[85vh] overflow-y-auto">
+              <Expand title={selectedSection.title} onClose={handleExpandClose}>
+                <div className="mt-4 p-4">
+                  <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
+                    {selectedSection.content || "No content available"}
+                  </p>
+                </div>
+              </Expand>
+            </div>
           </div>
-        </Expand>
+        </div>
       )}
     </div>
   );

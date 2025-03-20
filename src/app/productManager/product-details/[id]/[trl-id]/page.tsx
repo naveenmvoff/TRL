@@ -14,7 +14,7 @@ import { ObjectId } from "mongoose";
 import Select from "react-select";
 import notify from "@/lib/notify";
 import Expand from "@/components/expand";
-import SwitchTrl from '@/components/switch-trl';
+import SwitchTrlLevel from "@/components/switch-trlLevel";
 
 import DatePicker from "react-datepicker";
 
@@ -106,6 +106,7 @@ export default function ProductManager() {
     content: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [trlIds, setTrlIds] = useState<string[]>([]);
   console.log("formData", formData);
 
   const paramsing = useParams();
@@ -113,8 +114,25 @@ export default function ProductManager() {
 
   console.log("id", id);
 
+  // Add overflow hidden to body
+  useEffect(() => {
+    // Add overflow hidden to prevent page scrollbar
+    document.body.style.overflow = 'hidden';
+    
+    // Clean up on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   // // =============GET TRL LEVEL DETAILS from LevelData Schema===============
   useEffect(() => {
+    // Load trlIds from localStorage
+    const savedTrlIds = localStorage.getItem("productDetailsTrlIds");
+    if (savedTrlIds) {
+      setTrlIds(JSON.parse(savedTrlIds));
+    }
+
     const fetchTrlDetails = async () => {
       if (!id) return;
       setIsLoading(true);
@@ -321,13 +339,24 @@ export default function ProductManager() {
     setExpandedContent(null);
   };
 
+  const handleIndexChange = (index: number, newTrlId: string) => {
+    // Find the TRL level details for the new TRL ID
+    const trlLevel = trlIds.findIndex((id) => id === newTrlId);
+    if (trlLevel !== -1) {
+      // Navigate to the new TRL ID page
+      router.push(
+        `/productManager/product-details/${id}/${newTrlId}?name=${trlLevelName}&level=${trlLevelNumber}`
+      );
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white w-full overflow-hidden">
+      <div className="h-screen w-full overflow-hidden bg-white">
         <NavBar role="Product Manager" />
-        <div className="flex h-[calc(100vh-4rem)]">
+        <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
           <SideBar />
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <LoadingSpinner />
           </div>
         </div>
@@ -336,41 +365,59 @@ export default function ProductManager() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="h-screen w-full overflow-hidden bg-white">
       <NavBar role="Product Manager" />
-      <div className="flex flex-1">
-        {" "}
-        {/* Changed this container */}
-        {/* <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white"> */}
-          <SideBar />
-        {/* </div> */}
-        <div className="flex-1 overflow-y-auto ">
-          <main className="bg-secondary p-6 min-h-[calc(100vh-4rem)]">
-            
-          <div className="flex flex-row items-center justify-between space-x-4">
-              <div className="flex items-center gap-2">
-                {/* Back Arrow Button */}
-                <IoArrowBackCircle
-                  onClick={() => router.push(`/productManager/product-details/${id}`)}
-                  className="text-gray-600 hover:text-gray-700 transition-colors cursor-pointer"
-                  size={35}
-                />
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+        <SideBar />
+        <div className="flex-grow overflow-y-auto bg-secondary">
+          <main className="p-6">
+            <div className="flex flex-row items-center justify-between space-x-4">
+              <div className="flex flex-row items-center justify-between space-x-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <IoArrowBackCircle
+                    onClick={() =>
+                      router.push(`/productManager/product-details/${id}`)
+                    }
+                    className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
+                    size={35}
+                  />
 
-                {/* Navigation Section - Closer to Back Arrow */}
-                <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full text-white font-bold">
-                  <h1>Home</h1>
-                  <MdOutlineArrowForwardIos size={20} />
-                  <h1>TRL Level</h1>
+                  <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
+                    <h1
+                      className="text-gray-200 hover:cursor-pointer transition-all"
+                      onClick={() => router.push(`/productManager/dashboard`)}
+                    >
+                      Home
+                    </h1>
+                    <MdOutlineArrowForwardIos size={20} />
+                    <h1
+                      className="text-gray-200 hover:cursor-pointer transition-all"
+                      onClick={() =>
+                        router.push(`/productManager/product-details/${id}`)
+                      }
+                    >
+                      TRL Level
+                    </h1>
+                    <MdOutlineArrowForwardIos size={20} />
+                    <h1 className="text-white hover:cursor-context-menu">
+                      {trlLevelName}
+                    </h1>
+                  </div>
+
+                  {/* <SwitchTrlLevel
+                    trlIds={trlIds}
+                    onIndexChange={handleIndexChange}
+                  /> */}
                 </div>
+
+                {/* Forward/Backward Navigation */}
+                {/* <SwitchTrlLevel products={products} /> */}
               </div>
 
-                      {/* Forward/Backward Navigation */}
-              {/* <SwitchTrl products={products} />  */}
-                    {/* Replace the div containing IoChevron buttons */}
+              {/* /7/7/7 */}
             </div>
             <div className="bg-white rounded-md shadow-sm">
-              
-           
+          
               <div className="p-6">
                 <h2 className="text-xl font-medium text-gray-800">
                   Product Details
@@ -379,118 +426,114 @@ export default function ProductManager() {
                   TRL {trlLevelNumber} - {trlLevelName}
                 </h3>
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-t border-b text-sm text-gray-600">
-                      <th className="py-3 px-6 text-left font-medium">
-                        TRL SEGREGATION
-                      </th>
-                      <th className="py-3 px-6 text-left font-medium">
-                        DESCRIPTION
-                      </th>
-                      <th className="py-3 px-6 text-left font-medium">
-                        CURRENT UPDATED
-                      </th>
-                      <th className="py-3 px-6 text-left font-medium">
-                        STATUS
-                      </th>
-                      <th className="py-3 px-6 text-left font-medium">
-                        ACTIONS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {combinedTrlItems.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleView(item)}
-                      >
-                        <td className="py-4 px-6 text-black">
-                          {item.segregation}
-                        </td>
-
-                        <td className="py-4 px-6 text-black">
-                          {item.description.split(" ").length > 5
-                            ? `${item.description
-                                .split(" ")
-                                .slice(0, 5)
-                                .join(" ")}...`
-                            : item.description}
-                        </td>
-                        <td className="py-4 px-6 text-black">
-                          {item.description.split(" ").length > 5
-                            ? `${item.description
-                                .split(" ")
-                                .slice(0, 5)
-                                .join(" ")}...`
-                            : item.currentUpdated}
-                        </td>
-                        <td className="py-4 px-6 text-black">
-                          <span
-                            className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
-                              item.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : item.status === "progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(item);
-                              }}
-                              className="group relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#5D4FEF] to-[#4a3ecb] p-2 shadow-lg transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
-                            >
-                              <span className="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
-                              <Pencil
-                                size={23}
-                                className="text-white transition-colors duration-300 group-hover:text-[#d1d5db]"
-                              />
-                            </button>
-                          </div>
-                        </td>
+              <div>
+                <div className="overflow-x-auto ">
+                  <table className="w-full rounded-md">
+                    <thead className="bg-gray-700">
+                      <tr className="border-t border-b font-normal text-sm text-gray-50">
+                        <th className="py-3 px-6 text-left">
+                          TRL SEGREGATION
+                        </th>
+                        <th className="py-3 px-6 text-left">
+                          DESCRIPTION
+                        </th>
+                        <th className="py-3 px-6 text-left">
+                          CURRENT UPDATED
+                        </th>
+                        <th className="py-3 px-6 text-left">
+                          STATUS
+                        </th>
+                        <th className="py-3 px-6 text-left">
+                          ACTIONS
+                        </th>
                       </tr>
-                    ))}
-                    {combinedTrlItems.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="py-4 text-center text-gray-500"
+                    </thead>
+                    <tbody>
+                      {combinedTrlItems.map((item: TRLItem) => (
+                        <tr
+                          key={item.id}
+                          className="border-b cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleView(item)}
                         >
-                          No data available for this TRL level
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                          <td className="py-4 px-6 text-black">
+                            {item.segregation}
+                          </td>
+
+                          <td className="py-4 px-6 text-black">
+                            {item.description.split(" ").length > 5
+                              ? `${item.description
+                                  .split(" ")
+                                  .slice(0, 5)
+                                  .join(" ")}...`
+                              : item.description}
+                          </td>
+                          <td className="py-4 px-6 text-black">
+                            {item.description.split(" ").length > 5
+                                ? `${item.description
+                                    .split(" ")
+                                    .slice(0, 5)
+                                    .join(" ")}...`
+                                : item.currentUpdate}
+                          </td>
+                          <td className="py-4 px-6 text-black">
+                            <span
+                              className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
+                                item.status === "Completed"
+                                  ? "bg-green-200"
+                                  : item.status === "In Progress"
+                                  ? "bg-yellow-200"
+                                  : item.status === "Pending"
+                                  ? "bg-blue-200"
+                                  : "bg-gray-200"
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(item);
+                                }}
+                                className="group relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#5D4FEF] to-[#4a3ecb] p-2 shadow-lg transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
+                              >
+                                <span className="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
+                                <Pencil
+                                  size={23}
+                                  className="text-white transition-colors duration-300 group-hover:text-[#d1d5db]"
+                                />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {combinedTrlItems.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="py-4 text-center text-gray-500"
+                          >
+                            No data available for this TRL level
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </main>
         </div>
         {showPopupEdit && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center rounded-lg">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[100vh] overflow-hidden">
-              {/* <div className="max-h-[90vh] overflow-y-auto "> */}
-              <div className="max-h-[90vh] overflow-y-auto ">
-                <div className="flex flex-row justify-between items-start sticky top-0 bg-white  overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[90vh] overflow-hidden">
+              <div className="max-h-[85vh] overflow-y-auto">
+                <div className="flex flex-row justify-between items-start sticky top-0 bg-white z-10">
                   <div>
-                    {/* <h3 className="text-lg font-semibold text-blue-500 flex items-center gap-2">
-                      <span className="border-b-2 border-blue-500">
-                        EDIT TAB
-                      </span>
-                    </h3> */}
-
-                    <h3 className="text-xl font-bold text-blue-500 flex items-center gap-2 tracking-wide">
-                      <span className="relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">
+                    <h3 className="text-xl font-bold text-primary flex items-center gap-2 tracking-wide">
+                      <span className="relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-prtext-primary after:transition-all after:duration-300 hover:after:w-full">
                         Modify Panel
                       </span>
                     </h3>
@@ -1037,13 +1080,13 @@ export default function ProductManager() {
           </div>
         )}
         {showPopupView && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center rounded-lg">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[100vh] overflow-hidden">
-              <div className="max-h-[90vh] overflow-y-auto ">
-                <div className="flex flex-row justify-between items-start sticky top-0 bg-white  overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[90vh] overflow-hidden">
+              <div className="max-h-[85vh] overflow-y-auto">
+                <div className="flex flex-row justify-between items-start sticky top-0 bg-white z-10">
                   <div>
-                    <h3 className="text-xl font-bold text-blue-500 flex items-center gap-2 tracking-wide">
-                      <span className="relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">
+                    <h3 className="text-xl font-bold text-primary flex items-center gap-2 tracking-wide">
+                      <span className="relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-prtext-primary after:transition-all after:duration-300 hover:after:w-full">
                         View Panel
                       </span>
                     </h3>
@@ -1054,8 +1097,7 @@ export default function ProductManager() {
                   <p
                     onClick={() => setShowPopupView(false)}
                     className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors "
-                    >
-
+                  >
                     <svg
                       width="20"
                       height="20"
@@ -1130,7 +1172,7 @@ export default function ProductManager() {
                                     content: formData?.description || "-",
                                   })
                                 }
-                                className="text-blue-500 font-medium cursor-pointer"
+                                className="text-primary font-medium cursor-pointer"
                               >
                                 {" "}
                                 Read More
@@ -1162,7 +1204,7 @@ export default function ProductManager() {
                                     content: formData?.currentUpdate || "-",
                                   })
                                 }
-                                className="text-blue-500 font-medium cursor-pointer"
+                                className="text-primary font-medium cursor-pointer"
                               >
                                 {" "}
                                 Read More
@@ -1231,7 +1273,7 @@ export default function ProductManager() {
                                     content: formData?.otherNotes || "-",
                                   })
                                 }
-                                className="text-blue-500 font-medium cursor-pointer"
+                                className="text-primary font-medium cursor-pointer"
                               >
                                 {" "}
                                 Read More
@@ -1251,7 +1293,7 @@ export default function ProductManager() {
                             Start Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
-                            {formatDate(formData?.startDate) || "-"}
+                            {formatDate(formData?.startDate ?? null) || "-"}
                           </p>
                         </div>
 
@@ -1260,7 +1302,7 @@ export default function ProductManager() {
                             Estimated Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
-                            {formatDate(formData?.estimatedDate) || "-"}
+                            {formatDate(formData?.estimatedDate ?? null) || "-"}
                           </p>
                         </div>
 
@@ -1269,7 +1311,7 @@ export default function ProductManager() {
                             Extended Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
-                            {formatDate(formData?.extendedDate) || "-"}
+                            {formatDate(formData?.extendedDate ?? null) || "-"}
                           </p>
                         </div>
                       </div>

@@ -1,42 +1,57 @@
-import { IoChevronBackCircle, IoChevronForwardCircle } from 'react-icons/io5';
-import { useState } from 'react';
+import { IoChevronBackCircle, IoChevronForwardCircle } from "react-icons/io5";
+import { useState, useEffect } from "react";
 
 interface SwitchTrlProps {
-    products: any[]; // Replace 'any' with your actual product type
+  productIds: string[];
+  onIndexChange?: (index: number, productId: string) => void;
 }
 
-export default function SwitchTrl({ products }: SwitchTrlProps) {
-    console.log("products: aaaa", products)
-    const [currentIndex, setCurrentIndex] = useState(0);
+export default function SwitchTrl({
+  productIds,
+  onIndexChange,
+}: SwitchTrlProps) {
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const savedIndex = localStorage.getItem("currentProductIndex");
+    return savedIndex ? parseInt(savedIndex, 10) : 0;
+  });
 
-    const handlePrevious = () => {
-        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : products.length - 1));
-    };
+  // Ensure productIds exists and has items
+  if (!productIds || productIds.length === 0) {
+    return null; // Or return some placeholder UI
+  }
 
-    const handleNext = () => {
-        setCurrentIndex((prev) => (prev < products.length - 1 ? prev + 1 : 0));
-    };
+  const handlePrevious = () => {
+    if (!productIds) return; // Guard clause
+    const newIndex =
+      currentIndex > 0 ? currentIndex - 1 : productIds.length - 1;
+    setCurrentIndex(newIndex);
+    localStorage.setItem("currentProductIndex", newIndex.toString());
+    console.log("Current Product ID:", productIds[newIndex]);
+    onIndexChange?.(newIndex, productIds[newIndex]);
+  };
 
-    return (
-        <div>
-            <div className="flex flex-row space-x-3">
-                <IoChevronBackCircle
-                    className="text-gray-600 hover:text-gray-700 transition-colors cursor-pointer"
-                    size={35}
-                    onClick={handlePrevious}
-                />
-                <IoChevronForwardCircle
-                    className="text-gray-600 hover:text-gray-700 transition-colors cursor-pointer"
-                    size={35}
-                    onClick={handleNext}
-                />
-            </div>
-            {/* {products?.length > 0 && (
-                <div key={currentIndex}>
-                   
+  const handleNext = () => {
+    if (!productIds) return; // Guard clause
+    const newIndex =
+      currentIndex < productIds.length - 1 ? currentIndex + 1 : 0;
+    setCurrentIndex(newIndex);
+    localStorage.setItem("currentProductIndex", newIndex.toString());
+    console.log("Current Product ID:", productIds[newIndex]);
+    onIndexChange?.(newIndex, productIds[newIndex]);
+  };
 
-                </div>
-            )} */}
-        </div>
-    );
+  return (
+    <div className="flex space-x-3">
+      <IoChevronBackCircle
+        className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
+        size={35}
+        onClick={handlePrevious}
+      />
+      <IoChevronForwardCircle
+        className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
+        size={35}
+        onClick={handleNext}
+      />
+    </div>
+  );
 }
