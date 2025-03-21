@@ -19,7 +19,8 @@ export async function GET(req: Request) {
     console.log("Product found:", product);
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (err) {
+    console.error("Error fetching product:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

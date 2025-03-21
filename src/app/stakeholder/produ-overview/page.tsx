@@ -1,11 +1,69 @@
 "use client";
 
+// Add or update interfaces
+interface Product {
+  _id: string;
+  product: string;
+}
+
+interface TrlLevel {
+  trlLevelNumber: number;
+}
+
+interface TrlItem {
+  productId: string;
+  trlLevelId: string;
+  TrlLevelNumber: number;
+  TrlLevelName: string;
+  status: string;
+}
+
+interface ProductProgress {
+  name: string;
+  progress: number;
+  productID: string;
+  productId: string;
+  productName: string;
+  completionPercentage: number;
+  trlLevels: {
+    levelId: string;
+    levelNumber: number;
+    levelName: string;
+    sublevels: TrlItem[];
+    totalSublevels: number;
+    completedSublevels: number;
+  }[];
+  totalSublevels: number;
+  completedSublevels: number;
+}
+
+interface TrlLevelGroup {
+  levelId: string;
+  levelNumber: number;
+  levelName: string;
+  sublevels: TrlItem[];
+  totalSublevels: number;
+  completedSublevels: number;
+}
+
+interface ChartClickData {
+  productID: string;
+  name: string;
+  progress: number;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: ChartClickData;
+  }>;
+}
+
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-stakeholders";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+
 import {
   BarChart,
   Bar,
@@ -15,38 +73,41 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { BarChart2, Download, RefreshCw } from "lucide-react";
+
+// Add new type definitions
+type TrlData = {
+  productId: string;
+  trlData: TrlItem[];
+};
+
+type TrlResponse = {
+  success: boolean;
+  data: TrlItem[];
+};
+
+type ProductsResponse = {
+  success: boolean;
+  products: Product[];
+  message?: string;
+};
 
 export default function ProductOverview() {
   const { data: Session } = useSession();
   console.log("Session:", Session?.user?.id);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [trlLevels, setTrlLevels] = useState<any[] | null>(null);
-  const [products, setProducts] = useState<any[] | null>(null);
-  const [recivedProductIDs, setRecivedProductIDs] = useState<any[] | null>([]);
-  const [trlItemsData, setTrlItemsData] = useState<any[] | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [productProgressData, setProductProgressData] = useState<any[]>([]);
+  const [trlLevels, setTrlLevels] = useState<TrlLevel[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [recivedProductIDs, setRecivedProductIDs] = useState<string[]>([]);
+  const [trlItemsData, setTrlItemsData] = useState<TrlItem[]>([]);
+  const [productProgressData, setProductProgressData] = useState<ProductProgress[]>([]);
 
   console.log("products ", products);
   console.log("trlItemsData ", trlItemsData);
   console.log("productProgressData ", productProgressData);
   // State for active section
-  const productCount = products?.length || 0;
 
   const [activeSection, setActiveSection] = useState<string>("overview");
-
-  // Function to handle product selection
-  const handleProductSelection = (productID: string) => {
-    console.log("Selecting product:", productID);
-    setRecivedProductIDs((prev) => {
-      if (prev.includes(productID)) {
-        return prev.filter((id) => id !== productID);
-      }
-      return [...prev, productID];
-    });
-  };
 
   // Function to change the active section
   const changeSection = (section: string) => {
@@ -92,7 +153,7 @@ export default function ProductOverview() {
         const response = await fetch(
           `/api/stakeholder/products?userID=${Session.user.id}`
         );
-        const data = await response.json();
+        const data = await response.json() as ProductsResponse;
         console.log("Products data:", data);
 
         if (data.success) {
@@ -100,7 +161,7 @@ export default function ProductOverview() {
           // Store all product IDs from the API response
           if (data.products && data.products.length > 0) {
             const allProductIds = data.products.map(
-              (product: any) => product._id
+              (product: Product) => product._id
             );
             setRecivedProductIDs(allProductIds);
           }
@@ -127,11 +188,11 @@ export default function ProductOverview() {
 
         // Fetch data for all selected products
         const results = await Promise.all(
-          recivedProductIDs.map(async (productId) => {
+          recivedProductIDs.map(async (productId: string): Promise<TrlData> => {
             const detailsResponse = await fetch(
               `/api/trl-level?productId=${productId}`
             );
-            const data = await detailsResponse.json();
+            const data = await detailsResponse.json() as TrlResponse;
 
             if (data.success) {
               // If this product has TRL data, return it with the product ID
@@ -149,10 +210,10 @@ export default function ProductOverview() {
         );
 
         // Process and combine all TRL data
-        const processedData = results.reduce((acc: any[], result) => {
+        const processedData = results.reduce<TrlItem[]>((acc, result) => {
           if (result.trlData && result.trlData.length > 0) {
             // Add product ID reference to each TRL item
-            const trlItems = result.trlData.map((item: any) => ({
+            const trlItems = result.trlData.map((item: TrlItem) => ({
               ...item,
               productId: result.productId,
             }));
@@ -163,7 +224,7 @@ export default function ProductOverview() {
 
         // Sort by TRL level number if needed
         const sortedData = processedData.sort(
-          (a: any, b: any) => a.TrlLevelNumber - b.TrlLevelNumber
+          (a: TrlItem, b: TrlItem) => a.TrlLevelNumber - b.TrlLevelNumber
         );
 
         console.log("Processed TRL Data:", sortedData);
@@ -179,21 +240,21 @@ export default function ProductOverview() {
       }
     };
 
-    if (recivedProductIDs.length > 0) {
+    if (recivedProductIDs && recivedProductIDs.length > 0) {
       fetchTrlDetails();
     }
   }, [recivedProductIDs, products]);
 
   // Calculate progress data for each product based on TRL level completion
   const calculateProductProgressData = (
-    trlData: any[],
+    trlData: TrlItem[],
     productIDs: string[],
-    productsList: any[] | null
+    productsList: Product[] | null
   ) => {
     if (!productsList) return;
 
-    const progressData = productIDs
-      .map((productId) => {
+    const progressData: ProductProgress[] = productIDs
+      .map((productId): ProductProgress | null => {
         const product = productsList.find((p) => p._id === productId);
         if (!product) return null;
 
@@ -203,17 +264,7 @@ export default function ProductOverview() {
         );
 
         // Group items by TRL level and sublevel
-        const groupedByTrlLevel: Record<
-          string,
-          {
-            levelId: string;
-            levelNumber: number;
-            levelName: string;
-            sublevels: any[];
-            totalSublevels: number;
-            completedSublevels: number;
-          }
-        > = {};
+        const groupedByTrlLevel: Record<string, TrlLevelGroup> = {};
 
         // Process each TRL item
         productTrlItems.forEach((item) => {
@@ -262,6 +313,9 @@ export default function ProductOverview() {
             : 0;
 
         return {
+          name: product.product,
+          progress: completionPercentage,
+          productID: productId,
           productId,
           productName: product.product,
           trlLevels: trlLevelsArray,
@@ -270,10 +324,17 @@ export default function ProductOverview() {
           completionPercentage,
         };
       })
-      .filter(Boolean);
+      .filter((item): item is ProductProgress => item !== null);
 
     setProductProgressData(progressData);
   };
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error:', error);
+      // You could add a toast/notification here to display the error
+    }
+  }, [error]);
 
   if (isLoading) {
     return (
@@ -294,32 +355,26 @@ export default function ProductOverview() {
     );
   }
 
-  // Calculate average TRL if trlLevels data is available
-  const averageTRL = trlLevels
-    ? (
-        trlLevels.reduce((sum, level) => sum + level.trlLevelNumber, 0) /
-        trlLevels.length
-      ).toFixed(1)
-    : "N/A";
+  const processChartData = (data: ProductProgress[]): ChartClickData[] => {
+    return data.map((product) => ({
+      name: product.productName,
+      progress: product.completionPercentage,
+      productID: product.productId,
+    }));
+  };
 
   const TrlProgressChart = ({
-    products,
-    trlItemsData,
     progressData,
   }: {
-    products: any[];
-    trlItemsData: any[];
-    progressData: any[];
+    products: Product[];
+    trlItemsData: TrlItem[];
+    progressData: ProductProgress[];
   }) => {
-    const [tooltipData, setTooltipData] = useState<any>(null);
-
-    // Unified click handler for both bar and tooltip
-    const handleClick = (data: any) => {
+    const handleClick = (data: ChartClickData) => {
       console.log("Clicked Product ID:", data.productID);
-      // Your navigation logic here
     };
 
-    const CustomTooltip = ({ active, payload }: any) => {
+    const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
       if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
@@ -333,23 +388,15 @@ export default function ProductOverview() {
             }}
             style={{ pointerEvents: "all" }}
           >
-            <p className="font-bold text-primary  text-left">{`${data.name}`}</p>
+            <p className="font-bold text-primary text-left">{`${data.name}`}</p>
             <p className="text-[#f8572ebb] text-left">{`${data.progress}% Complete`}</p>
-            {/* <p className="text-xs text-blue-500 mt-1 text-left">
-              Click for details →
-            </p> */}
           </button>
         );
       }
       return null;
     };
 
-    // Transform progress data into chart format
-    const chartData = progressData.map((product) => ({
-      name: product.productName,
-      progress: product.completionPercentage,
-      productID: product.productId,
-    }));
+    const chartData = processChartData(progressData);
 
     return (
       <div className="w-full h-full">
@@ -501,10 +548,9 @@ export default function ProductOverview() {
                         </div>
                       ) : (
                         <TrlProgressChart
-                          // products={products}
-                          // trlItemsData={trlItemsData}
-                          progressData={productProgressData}
-                        />
+                            // products={products}
+                            // trlItemsData={trlItemsData}
+                            progressData={productProgressData} products={[]} trlItemsData={[]}                        />
                       )}
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { IoChevronBackCircle, IoChevronForwardCircle } from "react-icons/io5";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface SwitchTrlProps {
   productIds: string[];

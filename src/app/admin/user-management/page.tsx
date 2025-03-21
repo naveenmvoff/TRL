@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar/sidebar";
 import { User } from "lucide-react";
@@ -27,11 +27,8 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [showIfPm, setShowIfPm] = useState(false);
-  const [nameEdit, setNameEdit] = useState("");
   const [email, setEmail] = useState("");
-  const [RoleEdit, setRoleEdit] = useState("");
   const [error, setError] = useState("");
-  const [showPopupEdit, setShowPopupEdit] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPopupDelete, setShowPopupDelete] = useState(false);
@@ -44,19 +41,7 @@ export default function UserManagement() {
   const userID = Session?.user.id;
   console.log("userID: ========", userID);
 
-  useEffect(() => {
-    if (Session?.user?.id) {
-      console.log("userID: ", Session.user.id);
-      fetchUsers(Session.user.id); // ✅ Pass userID as an argument
-    }
-  }, [Session]);
-
-  // Fetch users Detials
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async (userId?: string) => {
+  const fetchUsers = useCallback(async (userId?: string) => {
     const currentUserId = userId || userID;
     console.log("userID*************: ", currentUserId);
     setIsLoading(true);
@@ -76,7 +61,19 @@ export default function UserManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userID]);
+
+  useEffect(() => {
+    if (Session?.user?.id) {
+      console.log("userID: ", Session.user.id);
+      fetchUsers(Session.user.id);
+    }
+  }, [Session, fetchUsers]);
+
+  // Fetch users Detials
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -96,31 +93,10 @@ export default function UserManagement() {
   }
 
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRoleEdit(e.target.value);
     setShowIfPm(e.target.value === "Product Manager");
     if (isEditing && editingUser) {
       setEditingUser({ ...editingUser, role: e.target.value });
     }
-  };
-
-  // Edit User Data
-  const handleEditClick = (user: User) => {
-    setIsEditing(true);
-    setEditingUser(user);
-    setNameEdit(user.name);
-    setEmail(user.email);
-    setRoleEdit(user.role);
-    setShowIfPm(user.role === "Product Manager");
-    setShowPopupEdit(true);
-  };
-
-  // handleClosePopupEdit for Update New User
-  const handleClosePopupEdit = () => {
-    setShowPopupEdit(false);
-    setShowIfPm(false);
-    setIsEditing(false);
-    setEditingUser(null);
-    resetForm();
   };
 
   // handleClosePopup for Create New User
@@ -136,11 +112,6 @@ export default function UserManagement() {
     // Clear form inputs when the popup closes
     setEmail("");
     setError("");
-    // (document.querySelector('input[placeholder="Enter user name"]') as HTMLInputElement).value = "";
-    // (document.querySelector('select') as HTMLSelectElement).value = "";
-    // const factoryInput = document.querySelector('input[placeholder="Enter user factory number"]') as HTMLInputElement;
-    // if (factoryInput) factoryInput.value = "";
-
     setIsEditing(false);
     setEditingUser(null);
     const nameInput = document.querySelector(
@@ -218,70 +189,6 @@ export default function UserManagement() {
       }
     } catch (error) {
       setsavingUser(false);
-      console.error("Error:", error);
-      // alert("Something went wrong. Please try again.");
-      notify("Something went wrong. Please try again.");
-    }
-  };
-
-  // // Update User detials in the Data Base
-  const handleUpdateUser = async () => {
-    if (!editingUser) return;
-
-    const name = (
-      document.querySelector(
-        'input[placeholder="Enter user name"]'
-      ) as HTMLInputElement
-    ).value;
-    const email = (
-      document.querySelector(
-        'input[placeholder="Enter user email"]'
-      ) as HTMLInputElement
-    ).value;
-    const selectElement = document.querySelector("select");
-    const role = selectElement ? (selectElement.value as string) : null;
-    const factoryNumber = (
-      document.querySelector(
-        'input[placeholder="Enter user factory number"]'
-      ) as HTMLInputElement
-    )?.value;
-
-    if (!name || !email || !role) {
-      // alert("Please fill all required fields");
-      // notify("Please fill all required fields");
-      notify("Please fill all required fields", "warning");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/admin/user-management", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userID,
-          userId: editingUser._id,
-          name,
-          email,
-          role,
-          factoryNumber,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // alert(result.message);
-        notify(result.message);
-        // handleClosePopupEdit();
-      } else {
-        // alert(result.message);
-        notify(result.message);
-      }
-
-      fetchUsers(); // recall the data to update the user details
-    } catch (error) {
       console.error("Error:", error);
       // alert("Something went wrong. Please try again.");
       notify("Something went wrong. Please try again.");

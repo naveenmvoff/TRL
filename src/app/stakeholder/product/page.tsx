@@ -25,8 +25,8 @@ export default function ProductPage() {
   const { data: Session } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[] | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState<any[] | null>(null);
+  const [searchTerm] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
   const [productManagers, setProductManagers] = useState<
     Record<string, string>
   >({});
@@ -38,6 +38,7 @@ export default function ProductPage() {
 
     const ids = products.map((product) => product._id);
     setProductIds(ids);
+    localStorage.setItem("dashboardProductIds", JSON.stringify(ids));
     console.log("Mapped Product IDs:", ids); // Add this line to debug
   }, [products]);
 
@@ -172,7 +173,6 @@ export default function ProductPage() {
             <h2 className="text-3xl font-bold tracking-tight text-primary">
               Products
             </h2>
-
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
           case "Product Manager":
             return NextResponse.redirect(new URL("/productManager/dashboard", request.url));
           case "Stakeholders":
-            return NextResponse.redirect(new URL("/stakeholder/product-overview", request.url));
+            return NextResponse.redirect(new URL("/stakeholder/produ-overview", request.url));
           default:
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith('/productManager') && token.role !== 'Product Manager') {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
-      if (pathname.startsWith('/stakeholder/product-overview') && token.role !== 'Stakeholders') {
+      if (pathname.startsWith('/stakeholder/produ-overview') && token.role !== 'Stakeholders') {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
     } else if (!isPublicPath) {

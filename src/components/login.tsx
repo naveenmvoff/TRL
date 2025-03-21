@@ -60,7 +60,7 @@ export default function LoginForm() {
             router.push("/productManager/dashboard");
             break;
           case "Stakeholders":
-            router.push("/stakeholder/product-overview");
+            router.push("/stakeholder/produ-overview");
             break;
           default:
             setError("Invalid user role");

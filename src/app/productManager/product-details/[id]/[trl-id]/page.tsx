@@ -1,22 +1,29 @@
-"use client";
-import { Pencil, FileText } from "lucide-react";
+// No changes were made to the provided code as the given code edit does not match the provided code document.
+// The provided code document does not contain the specified code edit.
+// The provided code document remains unchanged.
+
+"use client"; // This is required at the top for client components in Next.js App Router
+
+import { Pencil } from "lucide-react";
+// import { FileText } from "lucide-react";
 import {
   IoArrowBackCircle,
-  IoChevronForwardCircle,
-  IoChevronBackCircle,
+  // IoChevronForwardCircle,
+  // IoChevronBackCircle,
 } from "react-icons/io5";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
 import NavBar from "@/components/navbar/navbar";
 import SideBar from "@/components/sidebar-pm";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+// import { ObjectId } from "mongoose";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { ObjectId } from "mongoose";
-import Select from "react-select";
+// import SwitchTrlLevel from "@/components/switch-trlLevel";
 import notify from "@/lib/notify";
 import Expand from "@/components/expand";
-import SwitchTrlLevel from "@/components/switch-trlLevel";
+// import SwitchTrlLevel from "@/components/switch-trlLevel";
 
 import DatePicker from "react-datepicker";
+import Select, { StylesConfig } from 'react-select';
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -25,6 +32,7 @@ interface TRLItem {
   productId: string | undefined;
   _id: string | undefined;
   id: string;
+  userId?: string;
   subLevelId?: string;
   segregation: string;
   description: string;
@@ -39,7 +47,7 @@ interface TRLItem {
   extendedDate?: Date;
 }
 
-interface FormDataValue {
+interface FormData {
   _id?: string;
   productId?: string;
   trlLevelId?: string;
@@ -56,6 +64,140 @@ interface FormDataValue {
   extendedDate: Date | null;
 }
 
+interface StatusSelectProps {
+  value: string;
+  onChange: (newValue: string) => void;
+  isDisabled?: boolean;
+  className?: string;
+  placeholder?: string;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+  isDisabled?: boolean;
+}
+
+// Common select styles for all selects in the page
+const commonSelectStyles: StylesConfig<SelectOption, false> = {
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+  menu: (base) => ({
+    ...base,
+    position: "relative",
+    zIndex: 9999,
+    backgroundColor: "white",
+    width: "inherit",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+  }),
+  control: (base) => ({
+    ...base,
+    background: "white",
+    borderColor: "#e2e8f0",
+    zIndex: 9999,
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? "#5D4FEF"
+      : state.isDisabled
+      ? "#f3f4f6"
+      : "white",
+    color: state.isSelected
+      ? "white"
+      : state.isDisabled
+      ? "#9ca3af"
+      : "black",
+    cursor: state.isDisabled
+      ? "not-allowed"
+      : "pointer",
+    "&:hover": {
+      backgroundColor: state.isSelected
+        ? "#5D4FEF"
+        : state.isDisabled
+        ? "#f3f4f6"
+        : "#deebff",
+      color: state.isSelected
+        ? "white"
+        : state.isDisabled
+        ? "#9ca3af"
+        : "black",
+    },
+  }),
+};
+
+const statusSelectStyles: StylesConfig<SelectOption, false> = {
+  ...commonSelectStyles,
+  control: (base) => ({
+    ...base,
+    background: "white",
+    borderColor: "#e2e8f0",
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? "#5D4FEF"
+      : state.isDisabled
+      ? "#f3f4f6"
+      : "white",
+    color: state.isSelected
+      ? "white"
+      : state.isDisabled
+      ? "#9ca3af"
+      : "black",
+    cursor: state.isDisabled
+      ? "not-allowed"
+      : "pointer",
+    "&:hover": {
+      backgroundColor: state.isSelected
+        ? "#5D4FEF"
+        : state.isDisabled
+        ? "#f3f4f6"
+        : "#deebff",
+      color: state.isSelected
+        ? "white"
+        : state.isDisabled
+        ? "#9ca3af"
+        : "black",
+    },
+  }),
+};
+
+const StatusSelect = ({ value, onChange, isDisabled, className, placeholder }: StatusSelectProps) => {
+  const handleSelectChange = (selectedOption: SelectOption | null) => {
+    if (selectedOption) {
+      onChange(selectedOption.value);
+    }
+  };
+
+  const statusOptions: SelectOption[] = [
+    {
+      value: "Completed",
+      label: "Completed",
+      isDisabled: isDisabled,
+    },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Pending", label: "Pending" },
+  ];
+
+  return (
+    <Select
+      options={statusOptions}
+      value={{
+        value: value,
+        label: value,
+      }}
+      onChange={handleSelectChange}
+      className={className}
+      menuPortalTarget={document.body}
+      styles={statusSelectStyles}
+      placeholder={placeholder}
+    />
+  );
+};
+
 const formatDate = (date: Date | null) => {
   if (!date) return "-";
   return date.toLocaleDateString("en-GB", {
@@ -65,7 +207,7 @@ const formatDate = (date: Date | null) => {
   });
 };
 
-const canMarkAsCompleted = (data: FormDataValue | null): boolean => {
+const canMarkAsCompleted = (data: FormData | null): boolean => {
   if (!data) return false;
   return !!(
     data.description &&
@@ -86,6 +228,7 @@ export default function ProductManager() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  // This name is used for display purposes in the UI heading
   const trlLevelName = searchParams.get("name");
   const trlLevelNumber = searchParams.get("level");
   const trlId = params["trl-id"] as string; // Add this line to get trl-id
@@ -97,7 +240,7 @@ export default function ProductManager() {
   const [showPopupEdit, setShowPopupEdit] = useState(false);
   const [showPopupView, setShowPopupView] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TRLItem | null>(null);
-  const [formData, setFormData] = useState<FormDataValue | null>(null);
+  const [formData, setFormData] = useState<FormData | null>(null);
   const [touchedFields, setTouchedFields] = useState<{
     [key: string]: boolean;
   }>({});
@@ -143,7 +286,7 @@ export default function ProductManager() {
 
         if (data.success) {
           setTrlLevelContent(
-            data.data.map((item: any) => ({
+            data.data.map((item: TRLItem) => ({
               _id: item._id,
               userId: item.userId,
               productId: item.productId,
@@ -177,16 +320,16 @@ export default function ProductManager() {
 
   // Filter trlLevelContent based on trlId
   const filteredContent = trlLevelContent.filter(
-    (item: any) => item.trlLevelId === trlId
+    (item: TRLItem) => item.trlLevelId === trlId
   );
 
   console.log("Filtered TRL Content:", filteredContent);
 
   // Combine subLevels with trlLevelContent
-  const combinedTrlItems = subLevels.map((subLevel: any) => {
+  const combinedTrlItems = subLevels.map((subLevel: { _id: string; subLevelName: string }) => {
     // Find matching content from trlLevelContent
     const matchingContent = trlLevelContent.find(
-      (content: any) => content.subLevelId === subLevel._id
+      (content: TRLItem) => content.subLevelId === subLevel._id
     );
     // console.log("Matching Content:", matchingContent);
 
@@ -194,7 +337,7 @@ export default function ProductManager() {
       id: subLevel._id,
       segregation: subLevel.subLevelName,
       description: matchingContent?.description || "-",
-      currentUpdated: matchingContent?.currentUpdate || "-",
+      currentUpdate: matchingContent?.currentUpdate || "-",
       status: matchingContent?.status || "Pending",
       documentationLink: matchingContent?.documentationLink,
       otherNotes: matchingContent?.otherNotes,
@@ -335,10 +478,16 @@ export default function ProductManager() {
     }
   };
 
+  // Function to handle expanding and closing sections
+  // Currently not in use but kept for future functionality
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleExpandClose = () => {
     setExpandedContent(null);
   };
 
+  // Function to handle index changes
+  // Currently not in use but kept for future functionality
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleIndexChange = (index: number, newTrlId: string) => {
     // Find the TRL level details for the new TRL ID
     const trlLevel = trlIds.findIndex((id) => id === newTrlId);
@@ -404,14 +553,10 @@ export default function ProductManager() {
                     </h1>
                   </div>
 
-                  {/* <SwitchTrlLevel
-                    trlIds={trlIds}
-                    onIndexChange={handleIndexChange}
-                  /> */}
+                  {/* /7/7/7 */}
                 </div>
 
-                {/* Forward/Backward Navigation */}
-                {/* <SwitchTrlLevel products={products} /> */}
+                {/* /7/7/7 */}
               </div>
 
               {/* /7/7/7 */}
@@ -438,7 +583,7 @@ export default function ProductManager() {
                           DESCRIPTION
                         </th>
                         <th className="py-3 px-6 text-left">
-                          CURRENT UPDATED
+                          CURRENT UPDATE
                         </th>
                         <th className="py-3 px-6 text-left">
                           STATUS
@@ -612,7 +757,7 @@ export default function ProductManager() {
                           )}
                       </h1>
 
-                      <p className="text-md font-regular text-black mt-2 flex items-center">
+                      <p className="text-md font-regular text-black mt-2">
                         Current Update
                       </p>
                       <textarea
@@ -661,76 +806,31 @@ export default function ProductManager() {
 
                       <Select
                         options={[
-                          { value: true, label: "Yes" },
-                          { value: false, label: "No" },
+                          { value: "true", label: "Yes" },
+                          { value: "false", label: "No" },
                         ]}
                         value={{
-                          value: formData?.demoRequired || false,
+                          value: formData?.demoRequired ? "true" : "false",
                           label: formData?.demoRequired ? "Yes" : "No",
                         }}
-                        onChange={(e: any) =>
-                          formData &&
-                          setFormData({
-                            ...formData,
-                            demoRequired: e.value,
-                            // Reset demoStatus when switching to No
-                            demoStatus: e.value ? formData.demoStatus : "",
-                          })
-                        }
+                        onChange={(selectedOption) => {
+                          if (selectedOption) {
+                            const boolValue = selectedOption.value === "true";
+                            if (formData) {
+                              setFormData({
+                                ...formData,
+                                demoRequired: boolValue,
+                                // Reset demoStatus when switching to No
+                                demoStatus: boolValue ? formData.demoStatus : "",
+                              });
+                            }
+                          }
+                        }}
                         className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                         menuPortalTarget={document.body} // This ensures the menu is portalled to the body
                         menuPosition="absolute"
-                        styles={{
-                          menuPortal: (base) => ({
-                            ...base,
-                            zIndex: 99999, // Increased z-index
-                          }),
-                          menu: (base) => ({
-                            ...base,
-                            position: "absolute",
-                            zIndex: 99999, // Increased z-index
-                            width: "inherit",
-                            backgroundColor: "white", // Added background color
-                            boxShadow:
-                              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)", // Added shadow
-                          }),
-                          control: (base) => ({
-                            ...base,
-                            background: "white",
-                            borderColor: "#e2e8f0",
-                            zIndex: 1, // Added z-index for control
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected
-                              ? "#5D4FEF"
-                              : state.isDisabled
-                              ? "#f3f4f6"
-                              : "white",
-                            color: state.isSelected
-                              ? "white"
-                              : state.isDisabled
-                              ? "#9ca3af"
-                              : "black",
-                            cursor: state.isDisabled
-                              ? "not-allowed"
-                              : "pointer",
-                            "&:hover": {
-                              backgroundColor: state.isSelected
-                                ? "#5D4FEF"
-                                : state.isDisabled
-                                ? "#f3f4f6"
-                                : "#deebff",
-                              color: state.isSelected
-                                ? "white"
-                                : state.isDisabled
-                                ? "#9ca3af"
-                                : "black",
-                            },
-                          }),
-                        }}
+                        styles={commonSelectStyles}
                       />
-
                       {formData?.demoRequired && (
                         <>
                           <p className="text-md font-regular text-black mt-2">
@@ -753,64 +853,23 @@ export default function ProductManager() {
                                     formData.demoStatus.slice(1)
                                   : "Pending",
                               }}
-                              onChange={(e: any) =>
-                                setFormData(
-                                  formData
-                                    ? {
-                                        ...formData,
-                                        demoStatus: e.value,
-                                      }
-                                    : null
-                                )
-                              }
+                              onChange={(selectedOption) => {
+                                if (selectedOption) {
+                                  setFormData(
+                                    formData
+                                      ? {
+                                          ...formData,
+                                          demoStatus: selectedOption.value,
+                                        }
+                                      : null
+                                  );
+                                }
+                              }}
                               className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                               menuPortalTarget={document.body}
                               menuPosition="absolute"
                               menuPlacement="auto"
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                                menu: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                  backgroundColor: "white",
-                                }),
-                                control: (base) => ({
-                                  ...base,
-                                  background: "white",
-                                  borderColor: "#e2e8f0",
-                                }),
-                                option: (base, state) => ({
-                                  ...base,
-                                  backgroundColor: state.isSelected
-                                    ? "#5D4FEF"
-                                    : state.isDisabled
-                                    ? "#f3f4f6"
-                                    : "white",
-                                  color: state.isSelected
-                                    ? "white"
-                                    : state.isDisabled
-                                    ? "#9ca3af"
-                                    : "black",
-                                  cursor: state.isDisabled
-                                    ? "not-allowed"
-                                    : "pointer",
-                                  "&:hover": {
-                                    backgroundColor: state.isSelected
-                                      ? "#5D4FEF"
-                                      : state.isDisabled
-                                      ? "#f3f4f6"
-                                      : "#deebff",
-                                    color: state.isSelected
-                                      ? "white"
-                                      : state.isDisabled
-                                      ? "#9ca3af"
-                                      : "black",
-                                  },
-                                }),
-                              }}
+                              styles={commonSelectStyles}
                             />
                           </div>
                         </>
@@ -860,8 +919,8 @@ export default function ProductManager() {
                       />
 
                       <div className="flex flex-row gap-4">
-                        <div className="pr-4">
-                          <p className="w-28 text-md font-regular text-black mt-2">
+                        <div>
+                          <p className="text-md font-regular text-black mt-2">
                             Start Date
                           </p>
                           <DatePicker
@@ -909,8 +968,8 @@ export default function ProductManager() {
                           </h1>
                         </div>
 
-                        <div className="pr-4">
-                          <p className="w-28 text-md font-regular text-black mt-2">
+                        <div>
+                          <p className="text-md font-regular text-black mt-2">
                             Estimated Date
                           </p>
                           <DatePicker
@@ -957,8 +1016,8 @@ export default function ProductManager() {
                           </h1>
                         </div>
 
-                        <div className="pr-4">
-                          <p className="w-28 text-md font-regular text-black mt-2">
+                        <div>
+                          <p className="text-md font-regular text-black mt-2">
                             Extended Date
                           </p>
                           <DatePicker
@@ -985,73 +1044,14 @@ export default function ProductManager() {
                         Status
                       </p>
 
-                      <Select
-                        options={[
-                          {
-                            value: "Completed",
-                            label: "Completed",
-                            isDisabled: !canMarkAsCompleted(formData),
-                          },
-                          { value: "In Progress", label: "In Progress" },
-                          { value: "Pending", label: "Pending" },
-                        ]}
-                        value={{
-                          value: formData?.status || "",
-                          label: formData?.status || "",
-                        }}
-                        onChange={(e: any) =>
-                          formData &&
-                          setFormData({
-                            ...formData,
-                            status: e.value,
-                          })
+                      <StatusSelect
+                        value={formData?.status || ""}
+                        onChange={(value) =>
+                          setFormData(formData ? { ...formData, status: value } : null)
                         }
+                        isDisabled={!canMarkAsCompleted(formData)}
                         className="w-36 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                        menuPortalTarget={document.body}
-                        styles={{
-                          menuPortal: (base) => ({
-                            ...base,
-                            zIndex: 9999,
-                          }),
-                          menu: (base) => ({
-                            ...base,
-                            position: "relative",
-                            zIndex: 9999,
-                          }),
-                          control: (base) => ({
-                            ...base,
-                            background: "white",
-                            borderColor: "#e2e8f0",
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected
-                              ? "#5D4FEF"
-                              : state.isDisabled
-                              ? "#f3f4f6"
-                              : "white",
-                            color: state.isSelected
-                              ? "white"
-                              : state.isDisabled
-                              ? "#9ca3af"
-                              : "black",
-                            cursor: state.isDisabled
-                              ? "not-allowed"
-                              : "pointer",
-                            "&:hover": {
-                              backgroundColor: state.isSelected
-                                ? "#5D4FEF"
-                                : state.isDisabled
-                                ? "#f3f4f6"
-                                : "#deebff",
-                              color: state.isSelected
-                                ? "white"
-                                : state.isDisabled
-                                ? "#9ca3af"
-                                : "black",
-                            },
-                          }),
-                        }}
+                        placeholder="Select status"
                       />
                     </div>
                   </div>
@@ -1119,41 +1119,6 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
-                      {/* <p className="text-md font-regular text-black mt-2">
-                        Description
-                      </p>
-                      <p 
-                        className="w-full p-2 border text-black rounded-md bg-gray-50 line-clamp-4 overflow-hidden cursor-pointer hover:bg-gray-100" 
-                        onClick={() => setExpandedContent({
-                          title: "Description",
-                          content: formData?.description || "-"
-                        })}
-                      >
-                        {formData?.description || "-"}
-                      </p> */}
-
-                      {/* <p className="text-md font-regular text-black mt-2">
-                        Description
-                      </p>
-                      <p
-                        className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden cursor-pointer hover:bg-gray-100"
-                        onClick={() =>
-                          setExpandedContent({
-                            title: "Description",
-                            content: formData?.description || "-",
-                          })
-                        }
-                      >
-                        {formData?.description
-                          ? formData.description.split(" ").length > 60
-                            ? `${formData.description
-                                .split(" ")
-                                .slice(0, 69)
-                                .join(" ")}...`
-                            : formData.description
-                          : "-"}
-                      </p> */}
-
                       <p className="text-md font-regular text-black mt-2">
                         Description
                       </p>
@@ -1218,13 +1183,6 @@ export default function ProductManager() {
                         )}
                       </p>
 
-                      {/* <p className="text-md font-regular text-black mt-2">
-                        Current Update
-                      </p>
-                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
-                        {formData?.currentUpdate || "-"}
-                      </p> */}
-
                       <p className="text-md font-regular text-black mt-2">
                         Demo Required
                       </p>
@@ -1247,13 +1205,6 @@ export default function ProductManager() {
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
                         {formData?.documentationLink || "-"}
                       </p>
-
-                      {/* <p className="text-md font-regular text-black mt-2">
-                        Other Notes
-                      </p>
-                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
-                        {formData?.otherNotes || "-"}
-                      </p> */}
 
                       <p className="text-md font-regular text-black mt-2">
                         Other Notes
@@ -1340,13 +1291,20 @@ export default function ProductManager() {
         )}
       </div>
       {expandedContent && (
-        <Expand title={expandedContent.title} onClose={handleExpandClose}>
-          <div className="mt-4 p-4">
-            <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
-              {expandedContent.content}
-            </p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-auto">
+          <div className="max-w-3xl w-full">
+            <Expand 
+              title={expandedContent.title} 
+              onClose={() => setExpandedContent(null)}
+            >
+              <div className="p-4">
+                <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
+                  {expandedContent.content}
+                </p>
+              </div>
+            </Expand>
           </div>
-        </Expand>
+        </div>
       )}
     </div>
   );

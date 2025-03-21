@@ -1,7 +1,6 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
-// import { useEffect } from "react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -12,13 +11,18 @@ interface SidebarProps {
   onSectionChange?: (section: string) => void;
 }
 
-export default function Sidebar({ activeSection = "", onSectionChange }: SidebarProps) {
-
-  // const { data: session, status } = useSession();
-
+export default function Sidebar({
+  // activeSection = "",
+  onSectionChange,
+}: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [showPopup, setShowPopup] = useState(false);
+
+  const handleClick = (path: string, section: string) => {
+    router.push(path);
+    onSectionChange?.(section);
+  };
 
   const handleSignOut = async () => {
     try {
@@ -30,49 +34,30 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
     }
   };
 
-  // Function to handle section change
-  // const handleSectionChange = (section: string) => {
-  //   if (onSectionChange) {
-  //     onSectionChange(section);
-  //   }
-  // };
-
   return (
     <div className="w-52 min-h-[calc(100vh-4rem)] border-r flex flex-col">
       <div className="p-4 space-y-2">
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/stakeholder/product-overview"
+            pathname === "/stakeholder/produ-overview"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          onClick={() => router.push("/stakeholder/product-overview")}
+          onClick={() => handleClick("/stakeholder/produ-overview", "overview")}
         >
           Product overview
         </div>
 
         <div
           className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-            pathname === "/stakeholder/product"
+            pathname.startsWith("/stakeholder/product")
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          onClick={() => router.push("/stakeholder/product")}
+          onClick={() => handleClick("/stakeholder/product", "products")}
         >
           Products
         </div>
-
-        {/* <div
-          // className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-          className={`px-3 py-2 text-sm text-center rounded-md cursor-not-allowed ${
-            pathname === "/admin/user-management"
-              ? "bg-primary text-white"
-              : "bg-white text-black border hover:bg-secondary"
-          }`}
-          // onClick={() => router.push("/admin/user-management")}
-        >
-          Profile
-        </div> */}
       </div>
       <div className="mt-auto p-4 ">
         <button
@@ -82,8 +67,6 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
           Log Out
         </button>
       </div>
-
-
 
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -108,9 +91,7 @@ export default function Sidebar({ activeSection = "", onSectionChange }: Sidebar
             </div>
           </div>
         </div>
-        
       )}
- 
     </div>
   );
 }

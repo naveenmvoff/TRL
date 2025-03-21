@@ -3,16 +3,21 @@
 import NavBar from "@/components/navbar/navbar";
 import SidebarPM from "@/components/sidebar-pm";
 import type { FC } from "react";
-import { BiEditAlt } from "react-icons/bi";
-import { BiDetail } from "react-icons/bi";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SwitchTrl from '@/components/switch-trl';
 
-interface TechFlowItem {
-  id: string;
+interface Product {
+  _id: string;
+  product: string;
   description: string;
+  problemStatement: string;
+  solutionExpected: string;
+  productManagerID: string;
+  productViewer: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ProductDetailsProps {
@@ -20,7 +25,7 @@ interface ProductDetailsProps {
   email: string;
   factoryNumber: string;
   PMID?: string;
-  productsData: any[] | null; // Updated type
+  productsData: Product[] | null; 
 }
 
 const ProductDetails: FC<ProductDetailsProps> = ({
@@ -29,8 +34,9 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   factoryNumber,
   productsData,
 }) => {
-  if (!productsData) return <div>Loading...</div>; // Add loading state
   const router = useRouter();
+
+  if (!productsData) return <div>Loading...</div>; 
 
   const handleProductClick = (productId: string, index: number) => {
     localStorage.setItem('currentProductIndex', index.toString());
@@ -125,10 +131,10 @@ const LoadingSpinner = () => (
   </div>
 );
 
-export default function productManager() {
+export default function ProductManager() {
   const { data: Session } = useSession();
   interface ProductData {
-    products: any[];
+    products: Product[];
   }
   const [productData, setProductData] = useState<ProductData | null>(null);
   const [productIds, setProductIds] = useState<string[]>([]);
@@ -164,7 +170,7 @@ export default function productManager() {
                 setProductData(data);
                 
                 // Extract and save product IDs in order
-                const ids = data.products.map((product: any) => product._id);
+                const ids = data.products.map((product: Product) => product._id);
                 setProductIds(ids);
                 localStorage.setItem('dashboardProductIds', JSON.stringify(ids));
             } catch (error) {
@@ -178,7 +184,7 @@ export default function productManager() {
     if (!savedIds || PMID) {
         fetchPMData();
     }
-  }, [Session]);
+  }, [Session, PMID]);
 
   if (isLoading) {
     return (

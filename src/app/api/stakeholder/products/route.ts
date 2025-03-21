@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Product from "../../../../models/product";
 import { connectDB } from "../../../../lib/mongodb"; // Make sure this connects to MongoDB
-import mongoose from "mongoose";
+// Removing unused import
+// import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
     try {
@@ -32,4 +33,3 @@ export async function GET(req: NextRequest) {
       );
     }
   }
-  

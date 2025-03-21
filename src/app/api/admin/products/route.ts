@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
 
     if (
       !product ||
-      // !productManagerID ||
       !description ||
       !problemStatement ||
       !solutionExpected ||
@@ -83,14 +82,12 @@ export async function POST(req: NextRequest) {
 
 
     // Convert IDs to ObjectId safely
-    // const managerObjectId = toObjectId(productManagerID || "");
     const managerObjectId = productManagerID ? toObjectId(productManagerID) : null;
     const viewerObjectIds = toObjectIdArray(productViewer || []);
 
     const newProduct = new Product({
       userID: userID, // Make sure you pass userId from session in request body
       product,
-      // productManagerID: new mongoose.Types.ObjectId(productManagerID),
       productManagerID: managerObjectId,
       productViewer: viewerObjectIds,
       description,
@@ -103,7 +100,8 @@ export async function POST(req: NextRequest) {
       { success: true, product: newProduct },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (err) {
+    console.error("Product creation error:", err);
     return NextResponse.json(
       { success: false, message: "Product creation failed" },
       { status: 500 }

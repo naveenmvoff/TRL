@@ -23,8 +23,8 @@ export default function Expand({
   }, []);
 
   return (
-    <div className="w-full">
-      <div className="bg-slate-100 rounded-lg w-full p-6 shadow-xl">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-slate-100 rounded-lg w-full max-w-2xl p-6 shadow-xl mx-4">
         <div className="flex justify-between items-start mb-2">
           <div>
             <h2 className="text-xl font-bold text-gray-800">{title}</h2>
@@ -34,7 +34,7 @@ export default function Expand({
           </div>
           <button 
             onClick={onClose}
-            className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors "
+            className="rounded-full bg-gray-200 p-1.5 hover:bg-gray-300 transition-colors"
             aria-label="Close panel"
           >
             <svg 
@@ -56,7 +56,7 @@ export default function Expand({
           </button>
         </div>
         
-        <div className="bg-white rounded border border-gray-200 p-1 max-h-[calc(100vh-12rem)] overflow-y-auto text-justify">
+        <div className="bg-white rounded border border-gray-200 p-4 max-h-[calc(100vh-12rem)] overflow-y-auto text-justify">
           {children}
         </div>
       </div>

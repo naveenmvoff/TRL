@@ -3,24 +3,25 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcryptjs"
 import nodemailer from "nodemailer";
-import { error } from "console";
-import mongoose from "mongoose";
-
 
 // Utility function to validate and convert to ObjectId
+/*
 const toObjectId = (id: string) => {
   if (mongoose.isValidObjectId(id)) {
     return new mongoose.Types.ObjectId(id);
   }
   throw new Error(`Invalid ObjectId: ${id}`);
 };
+*/
 
 // Utility function to validate array of ids
+/*
 const toObjectIdArray = (ids: string[]) => {
   return ids
     .filter((id) => mongoose.isValidObjectId(id)) // Keep only valid IDs
     .map((id) => new mongoose.Types.ObjectId(id));
 };
+*/
 
 
 // Create user in the database

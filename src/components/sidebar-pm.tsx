@@ -20,34 +20,26 @@ export default function SidebarPM() {
     }
   };
 
-  // Regex patterns for path matching
-  const isDashboard = /^\/productManager\/dashboard$/.test(pathname);
-  const isProductDetails = /^\/productManager\/product-details\/\w+$/.test(
-    pathname
-  );
-  const isTRLLevel = /^\/productManager\/product-details\/\w+\/\w+$/.test(
-    pathname
-  );
-
-  const isProductOverview = /^\/productManager\/product-overview$/.test(
-    pathname
-  );
+ 
+  // const isTRLLevel = /^\/productManager\/product-details\/\w+\/\w+$/.test(
+  //   pathname
+  // );
 
   // Extract product ID from the path (for TRL Level navigation)
-  const pathSegments = pathname.split("/");
-  const productId = pathSegments[pathSegments.length - 2];
+  // const pathSegments = pathname.split("/");
+  // const productId = pathSegments[pathSegments.length - 2];
 
-  const handleGoToProductDetails = () => {
-    if (isTRLLevel && productId) {
-      // Go back to product details using product ID
-      router.push(`/productManager/product-details/${productId}`);
-    } else {
-      // Navigate normally if already in product details
-      router.push(
-        `/productManager/product-details/${productId || "default-id"}`
-      );
-    }
-  };
+  // const handleGoToProductDetails = () => {
+  //   if (isTRLLevel && productId) {
+  //     // Go back to product details using product ID
+  //     router.push(`/productManager/product-details/${productId}`);
+  //   } else {
+  //     // Navigate normally if already in product details
+  //     router.push(
+  //       `/productManager/product-details/${productId || "default-id"}`
+  //     );
+  //   }
+  // };
 
   return (
     <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white flex flex-col">

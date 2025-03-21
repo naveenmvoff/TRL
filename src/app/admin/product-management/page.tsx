@@ -1,19 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import Select from "react-select";
 import { useState, useEffect } from "react";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar/sidebar";
 import notify from "@/lib/notify";
-import { set } from "mongoose";
 import { useSession } from "next-auth/react";
-import { error } from "console";
-import { connectDB } from "@/lib/mongodb";
-// import CreateNewProductComp from "@/components/admin-createnewproduct/admin";
-import TRL from "@/models/trlMasterSchema";
-import { NextRequest } from "next/server";
-import TrlLevelData from "@/models/trlLevelData";
 
 interface User {
   _id: string;
@@ -49,11 +42,13 @@ export default function ProductManagementPage() {
     { _id: string; name: string; email: string }[]
   >([]);
 
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
   const [productName, setProductName] = useState("");
   const [selectedManagerID, setselectedManagerID] = useState("");
+  // useState to manage which manager is selected
+  // This state is used in the UI to display the selected manager's name in the dropdown
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [selectedManagerName, setSelectedManagerName] = useState("");
   const [description, setDescription] = useState("");
   const [problemStatement, setProblemStatement] = useState("");
   const [solutionExpected, setSolutionExpected] = useState("");
@@ -66,25 +61,41 @@ export default function ProductManagementPage() {
   const [showPopupEdit, setShowPopupEdit] = useState(false);
   const [trlDetials, setTrlDetials] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Error messages are displayed in the UI when needed
+  // Commenting out until used to avoid ESLint warnings
+  // const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
-  console.log("trlDetials", trlDetials);
-
-  // console.log("selectedViewersID-------------", selectedViewersID);
-  // console.log("selectedViewers&&&&&&&&&&&&&&", selectedViewers);
-
-  // // ==================Product Creating person validation!=============================
   const { data: Session } = useSession();
   const userID = Session?.user?.id;
   console.log("userID: ", userID);
   const [productDetails, setProductDetails] = useState<Product[]>([]);
-  // console.log("productDetails-------------", productDetails);
+
+  console.log("trlDetials", trlDetials);
+
+  // TO Get Product DATA for Dashboard
+  const productData = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/admin/products?userID=${userID}`, {
+        method: "GET",
+      });
+
+      if (response) {
+        const data = await response.json();
+        setProductDetails(data.products);
+      } else {
+        console.error("Failed to fetch Product.");
+      }
+    } catch (error) {
+      console.error("Error fetching Products:", error);
+    }
+  }, [userID]);
 
   useEffect(() => {
     if (Session?.user?.id) {
       console.log("userID: ", Session.user.id);
-      productData(Session.user.id); // ✅ Pass userID as an argument
+      productData(); // Pass userID as an argument
     }
-  }, [Session]);
+  }, [Session, productData]);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -94,7 +105,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
 
         if (data.success) {
-          setProducts(data.products);
+          setProductDetails(data.products);
         } else {
           console.log("Error!, Failed to fetch products:", data.message);
         }
@@ -107,9 +118,8 @@ export default function ProductManagementPage() {
     fetchProducts();
 
     pmData();
-    productData();
     userData();
-  }, []);
+  }, [productData]);
 
   // TO Get ONLY PM DATA
   const pmData = async () => {
@@ -119,7 +129,6 @@ export default function ProductManagementPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        // console.log("data-----------------------pm", data);
         setManagers(data);
       } else {
         console.error("Failed to fetch users.");
@@ -139,7 +148,6 @@ export default function ProductManagementPage() {
       const response = await fetch("/api/trl");
       console.log("ItrlMD - Got responce");
       const data = await response.json();
-      // console.log("TRL Master Data=====", data);
       if (data.success) {
         setTrlDetials(data.data);
       } else {
@@ -147,13 +155,10 @@ export default function ProductManagementPage() {
       }
     } catch (error) {
       console.log("Unable to GET TRL Details", error);
-      return Response.json(
-        {
-          success: false,
-          error: "Failed to fetch TRL details",
-        },
-        { status: 500 }
-      );
+      return {
+        success: false,
+        error: "Failed to fetch TRL details",
+      };
     }
   };
 
@@ -166,41 +171,15 @@ export default function ProductManagementPage() {
       if (response.ok) {
         const data = await response.json();
         setAccessUsers(data);
-        // console.log("DATA of Viewers", data);
       } else {
         console.error("Failed to fetch users.");
-        // notify("Failed to fetch users.");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
 
-  // TO Get Product DATA for Dashboard
-  const productData = async (userId?: string) => {
-    const currentUserId = userId || userID;
-    // console.log("userID*************: ", currentUserId);
-
-    try {
-      const response = await fetch(`/api/admin/products?userID=${userID}`, {
-        method: "GET",
-      });
-      // console.log("GET response ***********", response);
-
-      if (response) {
-        const data = await response.json();
-        // console.log("GET ALL PRODUCT DATA -----------------------", data);
-        setProductDetails(data.products);
-      } else {
-        console.error("Failed to fetch Product.");
-        // notify("Failed to fetch users.");
-      }
-    } catch (error) {
-      console.error("Error fetching Products:", error);
-    }
-  };
-
-  // // Create New Product
+  // Create New Product
   const handleCreateProduct = async () => {
     console.log("clicked");
 
@@ -226,7 +205,7 @@ export default function ProductManagementPage() {
         solutionExpected,
       };
 
-      console.log("Sending data to API:", payload); // Debugging
+      console.log("Sending data to API:", payload);
 
       const response = await fetch("/api/admin/products", {
         method: "POST",
@@ -241,7 +220,7 @@ export default function ProductManagementPage() {
 
       if (!response.ok) {
         if (data.errors) {
-          setErrorMessages(data.errors);
+          // setErrorMessages(data.errors);
         } else {
           notify("Failed to create product", "error");
         }
@@ -260,9 +239,10 @@ export default function ProductManagementPage() {
     }
   };
 
-  // // ====================Create TRL Levels - Step By Step=====================================
-
-  const createTrlLevels = async (productID: string, trlDetails: any[]) => {
+  const createTrlLevels = async (
+    productID: string,
+    trlDetails: Array<{ _id: string; subLevels: Array<{ _id: string }> }>
+  ) => {
     for (const trl of trlDetails) {
       const trlLevelID = trl._id;
 
@@ -270,8 +250,8 @@ export default function ProductManagementPage() {
         const payload = {
           userID: userID,
           productId: productID,
-          trlLevelId: trlLevelID, // Assign TRL level _id
-          subLevelId: subLevel._id, // Assign sub-level _id
+          trlLevelId: trlLevelID,
+          subLevelId: subLevel._id,
           description: "",
           currentUpdate: "",
           status: "to do",
@@ -286,7 +266,6 @@ export default function ProductManagementPage() {
 
         console.log("Payload****", payload);
 
-        // Send data to the API route
         try {
           const response = await fetch("/api/admin/product-trl", {
             method: "POST",
@@ -308,16 +287,13 @@ export default function ProductManagementPage() {
     }
   };
 
-  // Delete User Click
   const handleDeleteClick = (productID: string) => {
     setSelectedProductID(productID);
     setShowPopupDelete(true);
   };
 
-  // // Delete Product detials in the Data Base!
   const handleDeleteProduct = async (productId: string) => {
     try {
-      // Delete the product first
       const productResponse = await fetch(`/api/admin/products/${productId}`, {
         method: "DELETE",
       });
@@ -329,10 +305,9 @@ export default function ProductManagementPage() {
         return;
       }
 
-      // Only if product deletion was successful
       if (data.success) {
         notify("Product deleted successfully", "success");
-        await productData(); // Refresh the products list
+        await productData();
         setShowPopupDelete(false);
         setSelectedProductID(null);
       }
@@ -353,7 +328,6 @@ export default function ProductManagementPage() {
       setProductName(selectedProduct.product);
       setselectedManagerID(selectedProduct.productManagerID);
       setSelectedViewersID(selectedProduct.productViewer);
-      // setSelectedProductID(selectedProduct.productManagerID);
       setDescription(selectedProduct.description);
       setProblemStatement(selectedProduct.problemStatement);
       setSolutionExpected(selectedProduct.solutionExpected);
@@ -377,8 +351,7 @@ export default function ProductManagementPage() {
 
     const updatedProduct = {
       userID: Session?.user.id,
-      // _id: selectedProductID, // Ensure _id is sent in the request body
-      productId: selectedProductID, // Ensure _id is sent in the request body
+      productId: selectedProductID,
       product: productName,
       productManagerID: selectedManagerID,
       productViewer: selectedViewersID,
@@ -387,14 +360,11 @@ export default function ProductManagementPage() {
       solutionExpected: solutionExpected,
     };
 
-    // console.log("Sending PUT request to: /api/admin/products");
-    // console.log("Updated Product Data:************", updatedProduct);
-
     try {
       const response = await fetch(`/api/admin/products`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProduct), // Send ID in the body
+        body: JSON.stringify(updatedProduct),
       });
 
       console.log("Response Status:", response.status);
@@ -404,7 +374,7 @@ export default function ProductManagementPage() {
         console.log("Product details updated successfully:", data);
         notify("Product details updated successfully", "success");
         setShowPopupEdit(false);
-        productData(); // Refresh product data
+        productData();
       } else {
         const error = await response.json();
         console.error("Failed to update product:", error);
@@ -426,9 +396,14 @@ export default function ProductManagementPage() {
     setSolutionExpected("");
   };
 
-  let test = accessUsers.map((accessUsers) => ({
+  const test = accessUsers.map((accessUsers) => ({
     value: accessUsers._id,
     label: `${accessUsers.name} - ${accessUsers.email}`,
+  }));
+
+  const managerOptions = managers.map((manager) => ({
+    value: manager._id,
+    label: `${manager.name} - ${manager.email}`,
   }));
 
   if (isLoading) {
@@ -445,6 +420,10 @@ export default function ProductManagementPage() {
     );
   }
 
+  if (productDetails.length === 0) {
+    console.log("No products found");
+  }
+
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
       <NavBar role="admin" />
@@ -457,7 +436,8 @@ export default function ProductManagementPage() {
             </h2>
             <button
               onClick={() => {
-                setShowPopupCreateNewProduct(true), trlMasterData();
+                setShowPopupCreateNewProduct(true);
+                trlMasterData();
               }}
               className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary2"
             >
@@ -512,8 +492,6 @@ export default function ProductManagementPage() {
           </div>
         </div>
 
-        {/* Create New Product */}
-        {/* CreateNewProductComp() */}
         {showPopupCreateNewProduct && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center rounded-lg">
             <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 max-h-[100vh] overflow-hidden">
@@ -559,21 +537,16 @@ export default function ProductManagementPage() {
                   </p>
 
                   <Select
-                    options={managers.map((manager) => ({
-                      value: manager._id,
-                      label: `${manager.name} - ${manager.email}`,
-                    }))}
-                    value={
-                      managers.find((m) => m._id === selectedManagerID)
+                    options={managerOptions}
+                    defaultValue={
+                      selectedManagerID
                         ? {
+                            label: selectedManagerName,
                             value: selectedManagerID,
-                            label: managers.find(
-                              (m) => m._id === selectedManagerID
-                            )?.name,
                           }
                         : null
                     }
-                    onChange={(e: any) => setselectedManagerID(e.value)}
+                    onChange={(option) => option && setselectedManagerID(option.value)}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   ></Select>
 
@@ -582,13 +555,9 @@ export default function ProductManagementPage() {
                   </p>
 
                   <Select
-                    options={accessUsers.map((accessUsers) => ({
-                      value: accessUsers._id,
-                      label: `${accessUsers.name} - ${accessUsers.email}`,
-                    }))}
+                    options={test}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    // onChange={(e : any) => setselectedViewers(e.value)}
                     onChange={(selectedOptions) =>
                       setselectedViewers(
                         selectedOptions.map((option) => option.value)
@@ -643,7 +612,6 @@ export default function ProductManagementPage() {
                     >
                       {loading ? "Creating..." : "Create"}
                     </button>
-                    ;
                   </div>
                 </div>
               </div>
@@ -651,7 +619,6 @@ export default function ProductManagementPage() {
           </div>
         )}
 
-        {/* Delete confirmation modal with consistent styling */}
         {showPopupDelete && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full mx-4">
@@ -727,43 +694,17 @@ export default function ProductManagementPage() {
                     Product Manager Name & Email
                   </p>
 
-                  {/* <Select
-                    options={managers.map((manager) => ({
-                      // console.log(selectedManagerID);
-                      value: manager._id,
-                      label: `${manager.name} - ${manager.email}`,
-                    }))}
-                    defaultValue={
-                      managers.length > 0 ? { value: managers[0]._id, label: `${managers[2].name} - ${managers[0].email}`, }: null
-                    }
-                    onChange={(e: any) => setselectedManagerID(e.value)}
-                    className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                  ></Select> */}
-
                   <Select
-                    options={managers.map((manager) => ({
-                      value: manager._id,
-                      label: `${manager.name} - ${manager.email}`,
-                    }))}
+                    options={managerOptions}
                     defaultValue={
-                      managers.find(
-                        (manager) => manager._id === selectedManagerID
-                      )
+                      selectedManagerID
                         ? {
+                            label: selectedManagerName,
                             value: selectedManagerID,
-                            label: `${
-                              managers.find(
-                                (manager) => manager._id === selectedManagerID
-                              )?.name
-                            } - ${
-                              managers.find(
-                                (manager) => manager._id === selectedManagerID
-                              )?.email
-                            }`,
                           }
                         : null
                     }
-                    onChange={(e: any) => setselectedManagerID(e.value)}
+                    onChange={(option) => option && setselectedManagerID(option.value)}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   />
 
@@ -774,7 +715,6 @@ export default function ProductManagementPage() {
                     options={test}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    // onChange={(e: any) => setselectedViewers(e.value)}
                     onChange={(selectedOptions) =>
                       setSelectedViewersID(
                         selectedOptions.map((option) => option.value)
@@ -785,22 +725,6 @@ export default function ProductManagementPage() {
                     )}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   ></Select>
-
-                  {/* <Select
-                    options={accessUsers.map((accessUsers) => ({
-                      value: accessUsers._id,
-                      label: `${accessUsers.name} - ${accessUsers.email}`,
-                    }))}
-                    isMulti={true}
-                    closeMenuOnSelect={false}
-                    // onChange={(e : any) => setselectedViewers(e.value)}
-                    onChange={(selectedOptions) =>
-                      setselectedViewers(
-                        selectedOptions.map((option) => option.value)
-                      )
-                    }
-                    className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                  ></Select> */}
 
                   <p className="text-md font-regular text-black mt-2">
                     Description
