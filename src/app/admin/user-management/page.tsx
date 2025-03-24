@@ -41,27 +41,33 @@ export default function UserManagement() {
   const userID = Session?.user.id;
   console.log("userID: ========", userID);
 
-  const fetchUsers = useCallback(async (userId?: string) => {
-    const currentUserId = userId || userID;
-    console.log("userID*************: ", currentUserId);
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/admin/user-management?userID=${userID}`, {
-        method: "GET",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data); // Set the fetched users in state
-      } else {
-        console.log("Failed to fetch users.");
-        // notify("No user found!");
+  const fetchUsers = useCallback(
+    async (userId?: string) => {
+      const currentUserId = userId || userID;
+      console.log("userID*************: ", currentUserId);
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/user-management?userID=${userID}`,
+          {
+            method: "GET",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data); // Set the fetched users in state
+        } else {
+          console.log("Failed to fetch users.");
+          // notify("No user found!");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userID]);
+    },
+    [userID]
+  );
 
   useEffect(() => {
     if (Session?.user?.id) {
@@ -263,7 +269,7 @@ export default function UserManagement() {
           {/* Table with consistent responsive behavior */}
           <div className="border rounded-lg overflow-hidden">
             <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
-              <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
+              {/* <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
                 <thead className="bg-[#DDDDDD] text-black text-md font-bold sticky top-0 z-10">
                   <tr>
                     <th className="pl-4 py-3 text-left">User Name</th>
@@ -302,6 +308,57 @@ export default function UserManagement() {
                     </tr>
                   ))}
                 </tbody>
+              </table> */}
+              <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
+                <thead className="bg-[#DDDDDD] text-black text-md font-bold sticky top-0 z-10">
+                  <tr>
+                    <th className="pl-4 py-3 text-left">User Name</th>
+                    <th className="pl-1 py-3 text-left">User Email</th>
+                    <th className="pl-1 py-3 text-left">Role</th>
+                    <th className="pl-1 py-3 text-left">PF No</th>
+                    <th className="pl-1 py-3 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {Array.isArray(users) && users.length > 0 ? (
+                    users.map((user) => (
+                      <tr
+                        key={user._id}
+                        className="text-sm text-black hover:bg-gray-50"
+                      >
+                        <td className="pl-4 py-3 whitespace-nowrap text-left">
+                          {user.name}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          {user.email}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          {user.role}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          {user.factory ?? "-"}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          <button
+                            onClick={() => handleDeleteClick(user._id)}
+                            className="text-red1 hover:underline text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="pl-4 py-3 text-center text-gray-500 italic"
+                      >
+                        No Users Available, Create New User
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
               </table>
             </div>
           </div>
@@ -339,7 +396,7 @@ export default function UserManagement() {
 
                 <div className="space-y-4 mt-4">
                   <div>
-                    <p className="text-md font-regular text-black">Name</p>
+                    <p className="text-md font-regular text-black">Name <span className="text-red-500">*</span></p> 
                     <input
                       type="text"
                       placeholder="Enter user name"
@@ -348,7 +405,7 @@ export default function UserManagement() {
                   </div>
 
                   <div>
-                    <p className="text-md font-regular text-black">Email</p>
+                    <p className="text-md font-regular text-black">Email <span className="text-red-500">*</span></p>
                     <input
                       type="email"
                       placeholder="Enter user email"
@@ -363,7 +420,7 @@ export default function UserManagement() {
                   </div>
 
                   <div>
-                    <p className="text-md font-regular text-black">Role</p>
+                    <p className="text-md font-regular text-black">Role <span className="text-red-500">*</span></p>
                     <select
                       onChange={handleRoleChange}
                       className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"

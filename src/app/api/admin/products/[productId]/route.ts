@@ -4,13 +4,19 @@ import Product from "@/models/product";
 import TrlLevelData from "@/models/trlLevelData";
 import mongoose from "mongoose";
 
+// type Context = {
+//   params: {
+//     productId: string;
+//   };
+// };
+
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     await connectDB();
-    const { productId } = params;
+    const { productId } = await params;
 
     if (!productId || !mongoose.isValidObjectId(productId)) {
       return NextResponse.json(

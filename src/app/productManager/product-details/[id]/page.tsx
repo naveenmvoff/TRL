@@ -1,6 +1,6 @@
 "use client"; // This is required at the top for client components in Next.js App Router
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 // import { Pencil } from "lucide-react";
 import {
   IoArrowBackCircle,
@@ -11,14 +11,33 @@ import { MdOutlineArrowForwardIos } from "react-icons/md";
 import NavBar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar-pm";
 import Expand from "@/components/expand"; // Add this import
-import Select, { StylesConfig } from 'react-select';
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { ObjectId } from "mongoose";
 // import { connect } from "http2";
 // import { NextRequest, NextResponse } from "next/server";
 // import TrlLevelData from "@/models/trlLevelData";
 import SwitchTrl from "@/components/switch-trl";
+
+interface TRLItem {
+  _id: string;
+  TrlLevelNumber?: number;
+  trlLevelName?: string;
+  status: string;
+  subLevels?: {
+    subLevelName: string;
+    subLevelNumber: number;
+    _id: string;
+  }[];
+  description?: string;
+  documentationLink?: string;
+  otherNotes?: string;
+  demoRequired?: boolean;
+  demoStatus?: string;
+  startDate?: string;
+  estimatedDate?: string;
+  extendedDate?: string;
+}
 
 interface ProductDetails {
   createdAt: ObjectId;
@@ -30,40 +49,10 @@ interface ProductDetails {
   solutionExpected: string;
 }
 
-interface LevelDetail {
+interface TrlMasterItem {
   _id: string;
-  subLevelId: string;
-  status: string;
-  description?: string;
-  documentationLink?: string;
-  otherNotes?: string;
-  demoRequired?: boolean;
-  demoStatus?: string;
-  startDate?: string;
-  estimatedDate?: string;
-  extendedDate?: string;
-  dateCreated?: string;
-  subLevelName?: string;
-  currentUpdate?: string;
-}
-
-interface TrlDetail {
-  _id: string;
-  productID: string;
-  TrlLevel: string;
-  levelCount: number;
-  status: string;
-  levelDetails: LevelDetail[];
-  startDate?: string;
-  estimatedDate?: string;
-  extendedDate?: string;
-  dateCreated?: string;
-}
-
-interface TrlMasterData {
-  _id: string;
+  trlLevelNumber: number;
   trlLevelName: string;
-  description: string;
   subLevels: {
     subLevelName: string;
     subLevelNumber: number;
@@ -71,18 +60,23 @@ interface TrlMasterData {
   }[];
 }
 
-// Define interface for Select option
-interface SelectOption {
-  value: string;
-  label: string;
-  isDisabled?: boolean;
+interface TrlLevelDetail {
+  trlLevelId: string;
+  subLevelId: string;
+  description: string;
+  documentationLink: string;
+  otherNotes: string;
+  demoRequired: boolean;
+  demoStatus: string;
+  startDate: string;
+  estimatedDate: string;
+  extendedDate: string;
 }
 
-// interface ApiResponse<T> {
-//   success: boolean;
-//   data: T;
-//   error?: string;
-// }
+interface SectionType {
+  title: string;
+  content: string | undefined;
+}
 
 const LoadingSpinner = () => (
   <div className="flex flex-col justify-center items-center h-screen">
@@ -92,7 +86,7 @@ const LoadingSpinner = () => (
 );
 
 // Helper functions
-const formatDate = (dateString: string | undefined): string => {
+const formatDate = (dateString: string | undefined) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-GB", {
@@ -102,17 +96,17 @@ const formatDate = (dateString: string | undefined): string => {
   });
 };
 
-const calculateOverallStatus = (levelDetails: LevelDetail[]): string => {
+const calculateOverallStatus = (levelDetails: TrlLevelDetail[]) => {
   if (!levelDetails || levelDetails.length === 0) return "Pending";
 
   const hasCompleted = levelDetails.some(
-    (detail) => detail.status === "Completed"
+    (detail) => detail.demoStatus === "Completed"
   );
   const hasInProgress = levelDetails.some(
-    (detail) => detail.status === "In Progress"
+    (detail) => detail.demoStatus === "In Progress"
   );
   const allCompleted = levelDetails.every(
-    (detail) => detail.status === "Completed"
+    (detail) => detail.demoStatus === "Completed"
   );
 
   if (allCompleted) return "Completed";
@@ -120,88 +114,64 @@ const calculateOverallStatus = (levelDetails: LevelDetail[]): string => {
   return "Pending";
 };
 
-// Used in the UI to set background colors for status badges
-export const getStatusColor = (status: string): string => {
-  switch (status.toLowerCase()) {
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'in progress':
-      return 'bg-blue-100 text-blue-800';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'delayed':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-export default function ProductDetails() {
-  const params = useParams();
+export default function ProductDetails({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const productId = params.id as string;
+  const clientSideParams = useParams();
+  const pathname = usePathname();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [_trlMasterData, setTrlMasterData] = useState<TrlMasterData[]>([]);
-  const [trlDetails, setTrlDetails] = useState<TrlDetail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
   const [productIds, setProductIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Add overflow hidden to prevent page scrollbar
-    document.body.style.overflow = 'hidden';
-    
-    // Clean up on unmount
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const [productId, setProductId] = useState<string>(() => {
+    if (clientSideParams && typeof clientSideParams.id === "string") {
+      return clientSideParams.id;
+    }
+    return params.id;
+  });
 
-  const completedItems = trlDetails.filter(
-    (item) => item.status === "Completed"
-  ).length;
-  const progressPercentage = Math.round(
-    (completedItems / trlDetails.length) * 100
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [selectedSection, setSelectedSection] = useState<SectionType | null>(null);
 
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null
-  );
-
-  const [selectedSection, setSelectedSection] = useState<{
-    title: string;
-    content?: string;
-    icon: React.ReactNode;
-  } | null>(null);
-
-  const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
-
-  console.log("Product ID: ", productId);
-
-  const fetchTrlMasterData = useCallback(async () => {
-    console.log("Inside TRL Master Data - PM");
-
+  const fetchTrlMasterData = async () => {
     try {
-      const response = await fetch("/api/trl");
-      console.log("ItrlMD - Got responce");
-      if (response.ok) {
-        const data = await response.json();
-        setTrlMasterData(
-          data.data.map((item: TrlMasterData) => ({
+      const response = await fetch("/api/trl", {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        const sortedData = data.data.sort((a: TrlMasterItem, b: TrlMasterItem) => 
+          a.trlLevelNumber - b.trlLevelNumber
+        );
+        
+        setTrlItems(
+          sortedData.map((item: TrlMasterItem) => ({
             _id: item._id,
+            TrlLevelNumber: item.trlLevelNumber,
             trlLevelName: item.trlLevelName,
-            description: item.description,
             subLevels: item.subLevels,
+            status: "Pending",
           }))
         );
       } else {
-        console.error("Failed to fetch TRL master data");
+        throw new Error(data.error || "Invalid data format");
       }
     } catch (error) {
       console.error("Error fetching TRL master data:", error);
+      setTrlItems([]);
     }
-  }, []);
+  };
 
-  const fetchProductDetails = useCallback(async () => {
+  const fetchProductDetails = async () => {
     if (!productId) return;
     setIsLoading(true);
     try {
@@ -216,80 +186,99 @@ export default function ProductDetails() {
     } catch (error) {
       console.error("Error fetching product details:", error);
     }
-  }, [productId]);
+  };
 
-  const fetchTrlDetails = useCallback(async () => {
+  const fetchTrlDetails = async () => {
     if (!productId) return;
-    console.log("Inside fetchTrlDetails");
-
+    
     try {
-      // Get TRL master data first
-      await fetchTrlMasterData();
-
-      // Now fetch the TRL details for this product
-      const response = await fetch(`/api/trl/${productId}`);
-      console.log("ITRLDT - Got response");
-      
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log("TRLDT - Got data");
-        console.log(responseData);
-
-        if (responseData.success && responseData.data) {
-          const trlDetailsResponse: TrlDetail[] = responseData.data;
-          
-          // If no TRL details exist for this product, create default ones
-          if (trlDetailsResponse.length === 0) {
-            console.log("No TRL details found, creating defaults");
-            // Return early as nothing else to process
-            setIsLoading(false);
-            return;
-          }
-
-          // Process the TRL details to create a complete dataset
-          // Here we're adding masterId to identify each TRL level for easy reference
-          const combinedData = _trlMasterData.map((masterItem: TrlMasterData) => {
-            // Find the matching TRL detail for this master item
-            const matchingDetail = trlDetailsResponse.find(
-              (detail) => detail.TrlLevel === masterItem.trlLevelName
+      const [masterResponse, detailsResponse] = await Promise.all([
+        fetch("/api/trl", {
+          headers: {
+            'Accept': 'application/json',
+          },
+        }),
+        fetch(`/api/trl-level?productId=${productId}`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+      ]);
+  
+      const responses = await Promise.all([
+        masterResponse.json().catch(() => ({ success: false })),
+        detailsResponse.json().catch(() => ({ success: false }))
+      ]);
+  
+      const [masterData, detailsData] = responses;
+  
+      if (!masterResponse.ok || !detailsResponse.ok || !masterData.success || !detailsData.success) {
+        throw new Error(masterData.error || detailsData.error || 'One or more API requests failed');
+      }
+  
+      if (masterData.success && detailsData.success) {
+        const combinedData = masterData.data
+          .sort((a: TrlMasterItem, b: TrlMasterItem) => a.trlLevelNumber - b.trlLevelNumber)
+          .map((masterItem: TrlMasterItem) => {
+            const levelDetails = detailsData.data.filter(
+              (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
             );
 
-            // If we found a matching detail, use it, otherwise create default values
-            const levelDetails = matchingDetail?.levelDetails || [];
+            const sortedSubLevels = [...(masterItem.subLevels || [])].sort(
+              (a, b) => a.subLevelNumber - b.subLevelNumber
+            );
 
-            // Get the first and last sublevel details for dates
-            const firstSubLevelDetails = levelDetails[0];
-            const lastSubLevelDetails = levelDetails[levelDetails.length - 1];
+            const firstSubLevel = sortedSubLevels[0];
+            const lastSubLevel = sortedSubLevels[sortedSubLevels.length - 1];
 
-            // Calculate the overall status based on level details
-            const status = calculateOverallStatus(levelDetails);
+            const firstSubLevelDetails = levelDetails.find(
+              (d: TrlLevelDetail) => d.subLevelId === firstSubLevel?._id
+            );
+            const lastSubLevelDetails = levelDetails.find(
+              (d: TrlLevelDetail) => d.subLevelId === lastSubLevel?._id
+            );
 
             return {
               _id: masterItem._id,
-              productID: productId,
-              TrlLevel: masterItem.trlLevelName,
-              levelCount: masterItem.subLevels?.length || 0,
-              status: status,
-              levelDetails: levelDetails,
+              TrlLevelNumber: masterItem.trlLevelNumber,
+              trlLevelName: masterItem.trlLevelName,
+              subLevels: sortedSubLevels,
+              description: firstSubLevelDetails?.description || "",
+              status: calculateOverallStatus(levelDetails),
+              documentationLink: firstSubLevelDetails?.documentationLink || "",
+              otherNotes: firstSubLevelDetails?.otherNotes || "",
+              demoRequired: firstSubLevelDetails?.demoRequired || false,
+              demoStatus: firstSubLevelDetails?.demoStatus || "Pending",
               startDate: firstSubLevelDetails?.startDate || "",
               estimatedDate: lastSubLevelDetails?.estimatedDate || "",
               extendedDate: lastSubLevelDetails?.extendedDate || "",
-              dateCreated: firstSubLevelDetails?.dateCreated || "",
             };
           });
 
-          setTrlDetails(combinedData);
-          setIsLoading(false);
-        }
+        setTrlItems(combinedData);
       } else {
-        console.error("Failed to fetch TRL details");
-        setIsLoading(false);
+        throw new Error('Invalid data format received from API');
       }
     } catch (error) {
-      console.error("Error fetching TRL details:", error);
+      console.error("Error fetching TRL data:", error);
+      setTrlItems([]); // Set empty array on error
+    } finally {
       setIsLoading(false);
     }
-  }, [productId, fetchTrlMasterData, _trlMasterData]);
+  };
+
+  useEffect(() => {
+    if (clientSideParams && typeof clientSideParams.id === "string") {
+      setProductId(clientSideParams.id);
+    }
+  }, [pathname, clientSideParams]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   useEffect(() => {
     if (!productId) return;
@@ -297,16 +286,17 @@ export default function ProductDetails() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        console.log("Starting data fetch...");
         const savedIds = localStorage.getItem("dashboardProductIds");
         if (savedIds) {
           setProductIds(JSON.parse(savedIds));
         }
-
-        await Promise.all([
-          fetchTrlMasterData(),
-          fetchProductDetails(),
-          fetchTrlDetails(),
-        ]);
+        console.log("Fetching TRL master data...");
+        await fetchTrlMasterData();
+        console.log("Fetching product details...");
+        await fetchProductDetails();
+        console.log("Fetching TRL details...");
+        await fetchTrlDetails();
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -315,14 +305,22 @@ export default function ProductDetails() {
     };
 
     fetchData();
-  }, [productId, fetchProductDetails, fetchTrlDetails, fetchTrlMasterData]);
+  }, [productId]);
+
+  const calculateProgress = () => {
+    if (!trlItems || trlItems.length === 0) return 0;
+    const completedItems = trlItems.filter((item) => item.status === "Completed").length;
+    return Math.round((completedItems / trlItems.length) * 100) || 0;
+  };
+
+  const progressPercentage = calculateProgress();
 
   const handleTRLClick = (
     productId: string,
     trlId: string,
     levelName: string,
     levelNumber: number,
-    subLevels: LevelDetail[]
+    subLevels: TRLItem['subLevels']
   ) => {
     router.push(
       `/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(
@@ -333,83 +331,16 @@ export default function ProductDetails() {
     );
   };
 
-  const handleSectionClick = (section: {
-    title: string;
-    content?: string;
-    icon: React.ReactNode;
-  }) => {
-    if (!isAnyPopupOpen) {
-      setSelectedSection(section);
-      setIsAnyPopupOpen(true);
-    }
+  const handleSectionClick = (section: SectionType) => {
+    setSelectedSection(section);
   };
 
   const handleExpandClose = () => {
     setSelectedSection(null);
-    setIsAnyPopupOpen(false);
   };
 
   const handleIndexChange = (index: number, newProductId: string) => {
     router.push(`/productManager/product-details/${newProductId}`);
-  };
-
-  // Define TRL level select styles using the proper StylesConfig type from react-select
-  const trlSelectStyles: StylesConfig<SelectOption, false> = {
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      backgroundColor: "white",
-      width: "inherit",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    }),
-    control: (base) => ({
-      ...base,
-      background: "white",
-      borderColor: "#e2e8f0",
-      zIndex: 9999,
-    }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? "#5D4FEF"
-        : state.isDisabled
-        ? "#f3f4f6"
-        : "white",
-      color: state.isSelected
-        ? "white"
-        : state.isDisabled
-        ? "#9ca3af"
-        : "black",
-      cursor: state.isDisabled
-        ? "not-allowed"
-        : "pointer",
-      "&:hover": {
-        backgroundColor: state.isSelected
-          ? "#5D4FEF"
-          : state.isDisabled
-          ? "#f3f4f6"
-          : "#deebff",
-        color: state.isSelected
-          ? "white"
-          : state.isDisabled
-          ? "#9ca3af"
-          : "black",
-      },
-    }),
-  };
-
-  const handleTrlChange = (option: SelectOption | null) => {
-    if (!option) return;
-    
-    const selectedTrlId = option.value;
-    console.log("Selected TRL:", selectedTrlId);
-    
-    // Navigate to the details page for this specific TRL
-    router.push(`/productManager/product-details/${productId}/${selectedTrlId}`);
   };
 
   if (isLoading) {
@@ -501,7 +432,7 @@ export default function ProductDetails() {
               
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-3xl font-bold text-gray-800">
-                      {progressPercentage}%
+                      {isNaN(progressPercentage) ? '0' : progressPercentage}%
                     </span>
                     <span className="text-xs text-gray-500 mt-1">
                       Completed
@@ -568,7 +499,7 @@ export default function ProductDetails() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2z"
                         ></path>
                       </svg>
                     ),
@@ -576,11 +507,7 @@ export default function ProductDetails() {
                 ].map((section, index) => (
                   <div
                     key={index}
-                    className={`group flex flex-col flex-1 p-4 rounded-lg border border-gray-200 bg-gray-50 transition-all hover:bg-white hover:shadow-lg ${
-                      isAnyPopupOpen
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }`}
+                    className={`group flex flex-col flex-1 p-4 rounded-lg border border-gray-200 bg-gray-50 transition-all hover:bg-white hover:shadow-lg cursor-pointer`}
                     onClick={() => handleSectionClick(section)}
                   >
                     <div className="flex items-center mb-2">
@@ -599,39 +526,7 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* TRL Level Select Dropdown */}
-            <div className="mb-6 w-full md:w-1/3">
-              <label
-                htmlFor="trl-level"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
-                TRL Level
-              </label>
-              <Select
-                id="trl-level"
-                instanceId="trl-level-select"
-                value={
-                  trlDetails.length > 0
-                    ? {
-                        value: trlDetails[0]._id,
-                        label: trlDetails[0].TrlLevel,
-                      }
-                    : null
-                }
-                options={trlDetails.map((trl) => ({
-                  value: trl._id,
-                  label: trl.TrlLevel,
-                }))}
-                onChange={handleTrlChange}
-                placeholder="Select TRL Level"
-                isSearchable
-                className="w-full text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                styles={trlSelectStyles}
-                menuPortalTarget={document.body}
-                menuPosition="absolute"
-              />
-            </div>
-
+    
             <div className="bg-white border rounded-lg p-6 mb-4">
               <h2 className="text-lg font-semibold text-primary mb-4">
                 TRL Work Flow
@@ -661,16 +556,16 @@ export default function ProductDetails() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white text-black">
-                      {trlDetails.map((item, index) => (
+                      {trlItems.map((item, index) => (
                         <tr
                           key={item._id}
                           onClick={() =>
                             handleTRLClick(
                               productId,
                               item._id,
-                              item.TrlLevel || "",
-                              item.levelCount || 0,
-                              item.levelDetails || []
+                              item.trlLevelName || "",
+                              item.TrlLevelNumber || 0,
+                              item.subLevels || []
                             )
                           }
                           className={`${
@@ -680,13 +575,13 @@ export default function ProductDetails() {
                           <td className="pl-4 py-3 whitespace-nowrap">
                             <div className="flex items-center space-x-2">
                               <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium">
-                                {item.levelCount}
+                                {item.TrlLevelNumber}
                               </div>
                               <span className="font-medium">TRL</span>
                             </div>
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap font-medium">
-                            {item.TrlLevel}
+                            {item.trlLevelName}
          
                           </td>
                           <td className="pl-4 py-3 whitespace-nowrap">
@@ -720,7 +615,7 @@ export default function ProductDetails() {
                       ))}
                     </tbody>
                   </table>
-                  {trlDetails.length === 0 && (
+                  {trlItems.length === 0 && (
                     <div className="py-6 text-center text-gray-500">
                       No TRL data available.
                     </div>
@@ -733,18 +628,14 @@ export default function ProductDetails() {
       </div>
 
       {selectedSection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[90vh] overflow-hidden">
-            <div className="max-h-[85vh] overflow-y-auto">
-              <Expand title={selectedSection.title} onClose={handleExpandClose}>
-                <div className="mt-4 p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
-                    {selectedSection.content || "No content available"}
-                  </p>
-                </div>
-              </Expand>
+        <div className="fixed inset-0 z-50">
+          <Expand title={selectedSection.title} onClose={handleExpandClose}>
+            <div className="mt-4 p-4">
+              <p className="text-gray-700 whitespace-pre-wrap text-base leading-relaxed">
+                {selectedSection.content || "No content available"}
+              </p>
             </div>
-          </div>
+          </Expand>
         </div>
       )}
     </div>

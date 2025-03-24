@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
         
         await connectDB();
         const trlLevelData = await TrlLevelData.find({ productId })
-        console.log("TRL Level Data================: ", trlLevelData);
+        // console.log("TRL Level Data================: ", trlLevelData);
         
         return NextResponse.json({
             success: true,

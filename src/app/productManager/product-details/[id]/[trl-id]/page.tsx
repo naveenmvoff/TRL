@@ -1,7 +1,3 @@
-// No changes were made to the provided code as the given code edit does not match the provided code document.
-// The provided code document does not contain the specified code edit.
-// The provided code document remains unchanged.
-
 "use client"; // This is required at the top for client components in Next.js App Router
 
 import { Pencil } from "lucide-react";

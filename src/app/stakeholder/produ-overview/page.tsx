@@ -55,8 +55,12 @@ interface ChartClickData {
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
+    value: number;
     payload: ChartClickData;
+    name: string;
+    dataKey: string;
   }>;
+  label?: string;
 }
 
 import NavBar from "@/components/navbar/navbar";
@@ -100,7 +104,9 @@ export default function ProductOverview() {
   const [products, setProducts] = useState<Product[]>([]);
   const [recivedProductIDs, setRecivedProductIDs] = useState<string[]>([]);
   const [trlItemsData, setTrlItemsData] = useState<TrlItem[]>([]);
-  const [productProgressData, setProductProgressData] = useState<ProductProgress[]>([]);
+  const [productProgressData, setProductProgressData] = useState<
+    ProductProgress[]
+  >([]);
 
   console.log("products ", products);
   console.log("trlItemsData ", trlItemsData);
@@ -153,7 +159,7 @@ export default function ProductOverview() {
         const response = await fetch(
           `/api/stakeholder/products?userID=${Session.user.id}`
         );
-        const data = await response.json() as ProductsResponse;
+        const data = (await response.json()) as ProductsResponse;
         console.log("Products data:", data);
 
         if (data.success) {
@@ -192,7 +198,7 @@ export default function ProductOverview() {
             const detailsResponse = await fetch(
               `/api/trl-level?productId=${productId}`
             );
-            const data = await detailsResponse.json() as TrlResponse;
+            const data = (await detailsResponse.json()) as TrlResponse;
 
             if (data.success) {
               // If this product has TRL data, return it with the product ID
@@ -331,7 +337,7 @@ export default function ProductOverview() {
 
   useEffect(() => {
     if (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       // You could add a toast/notification here to display the error
     }
   }, [error]);
@@ -430,7 +436,7 @@ export default function ProductOverview() {
             />
             <Tooltip
               cursor={{ fill: "transparent" }}
-              content={CustomTooltip}
+              content={<CustomTooltip />}
               wrapperStyle={{
                 zIndex: 1000,
                 pointerEvents: "auto",
@@ -438,6 +444,16 @@ export default function ProductOverview() {
               }}
               wrapperClassName="hover:bg-black"
             />
+            {/* <Tooltip
+              cursor={{ fill: "transparent" }}
+              content={CustomTooltip}
+              wrapperStyle={{
+                zIndex: 1000,
+                pointerEvents: "auto",
+                cursor: "pointer",
+              }}
+              wrapperClassName="hover:bg-black"
+            /> */}
             <Bar
               yAxisId="right"
               dataKey="progress"
@@ -543,14 +559,17 @@ export default function ProductOverview() {
                     {/* Product Chart */}
                     <div className="w-full h-[400px] flex flex-col">
                       {!trlLevels || !products || !trlItemsData ? (
-                        <div className="flex items-center justify-center h-full" >
+                        <div className="flex items-center justify-center h-full">
                           <p className="text-primary">Loading chart data...</p>
                         </div>
                       ) : (
                         <TrlProgressChart
-                            // products={products}
-                            // trlItemsData={trlItemsData}
-                            progressData={productProgressData} products={[]} trlItemsData={[]}                        />
+                          // products={products}
+                          // trlItemsData={trlItemsData}
+                          progressData={productProgressData}
+                          products={[]}
+                          trlItemsData={[]}
+                        />
                       )}
                     </div>
                   </div>

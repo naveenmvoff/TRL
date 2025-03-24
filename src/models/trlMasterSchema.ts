@@ -3,13 +3,13 @@ import mongoose, { Document, Schema } from "mongoose";
 interface SubLevel {
   subLevelName: string;
   subLevelNumber: number;
-};
+}
 
 interface TRLDocument extends Document {
   trlLevelNumber: number;
   trlLevelName: string;
   subLevels: SubLevel[];
-};
+}
 
 const subLevelSchema = new Schema<SubLevel>({
   subLevelName: { type: String, required: true },
@@ -22,17 +22,12 @@ const trlSchema = new Schema<TRLDocument>({
   subLevels: [subLevelSchema],
 });
 
-const TRL = mongoose.models.TRL || mongoose.model<TRLDocument>("TRL", trlSchema);
+const TRL =
+  mongoose.models.TRL || mongoose.model<TRLDocument>("TRL", trlSchema);
 
 export default TRL;
 
-
-
-
-
-
-// // // // // // ==============================JAVASCRIPT .JS FILE CODE - when run this use the file extension as .js=====================================
-
+// // // // // // // ==============================JAVASCRIPT .JS FILE CODE - when run this use the file extension as .js=====================================
 
 // import mongoose from "mongoose";
 
@@ -49,11 +44,8 @@ export default TRL;
 //   // estimatedDate: { type: Date },
 //   // extendedDate: { type: Date },
 
-
 // });
 
 // const TRL = mongoose.model("TRL", trlSchema);
 
 // export default TRL;
-
-

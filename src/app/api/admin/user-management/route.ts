@@ -101,6 +101,7 @@ export async function POST(req: Request) {
 
   async function sendEmail(to: string, userName: string, password: string) {
     try {
+      console.log("sending Email");
       const transporter = nodemailer.createTransport({
         service: "gmail", // Use Gmail as an example
         auth: {

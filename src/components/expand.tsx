@@ -13,9 +13,7 @@ export default function Expand({
   children,
   onClose,
 }: ExpandProps) {
-  // Add cleanup on unmount
   useEffect(() => {
-    // Prevent background scrolling when popup is open
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
@@ -23,8 +21,12 @@ export default function Expand({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-slate-100 rounded-lg w-full max-w-2xl p-6 shadow-xl mx-4">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50" 
+        onClick={onClose}
+      />
+      <div className="bg-slate-100 rounded-lg w-full max-w-2xl p-6 shadow-xl mx-4 relative z-10">
         <div className="flex justify-between items-start mb-2">
           <div>
             <h2 className="text-xl font-bold text-gray-800">{title}</h2>
