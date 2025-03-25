@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
 
     // Public paths that don't require authentication
     const isPublicPath = pathname === "/" || 
+                        pathname === "/signup" || 
                         pathname.startsWith("/_next") || 
                         pathname.startsWith("/api/auth") ||
                         pathname === "/favicon.ico";
