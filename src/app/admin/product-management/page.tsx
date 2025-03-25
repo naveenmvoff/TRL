@@ -294,6 +294,18 @@ export default function ProductManagementPage() {
 
   const handleDeleteProduct = async (productId: string) => {
     try {
+      // First delete the TRL level data
+      const trlResponse = await fetch(`/api/trl-level?productId=${productId}`, {
+        method: "DELETE",
+      });
+
+      if (!trlResponse.ok) {
+        const trlData = await trlResponse.json();
+        notify(trlData.error || "Failed to delete product", "error");
+        return;
+      }
+
+      // Then delete the product
       const productResponse = await fetch(`/api/admin/products/${productId}`, {
         method: "DELETE",
       });
@@ -327,11 +339,15 @@ export default function ProductManagementPage() {
     if (selectedProduct) {
       setProductName(selectedProduct.product);
       setselectedManagerID(selectedProduct.productManagerID);
-      
+
       // Find the manager and set their name
-      const manager = managers.find(m => m._id === selectedProduct.productManagerID);
-      setSelectedManagerName(manager ? `${manager.name} - ${manager.email}` : '');
-      
+      const manager = managers.find(
+        (m) => m._id === selectedProduct.productManagerID
+      );
+      setSelectedManagerName(
+        manager ? `${manager.name} - ${manager.email}` : ""
+      );
+
       setSelectedViewersID(selectedProduct.productViewer);
       setDescription(selectedProduct.description);
       setProblemStatement(selectedProduct.problemStatement);
@@ -452,7 +468,7 @@ export default function ProductManagementPage() {
 
           <div className="border rounded-lg overflow-hidden">
             <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
-              {/* <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
+              <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
                 <thead className="bg-[#DDDDDD] text-black text-md font-bold sticky top-0 z-10">
                   <tr>
                     <th className="pl-4 py-3 text-left">Products</th>
@@ -461,85 +477,45 @@ export default function ProductManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {(Array.isArray(productDetails) ? productDetails : []).map(
-                    (data) => {
-                      return (
-                        <tr key={data._id} className="text-sm text-black">
-                          <td className="pl-4 py-3 whitespace-nowrap text-left">
-                            {data.product}
-                          </td>
-                          <td className="pl-1 py-3 whitespace-nowrap text-left">
-                            {managers.find(
-                              (i) => i._id === data.productManagerID
-                            )?.name || "PM not assigned!"}
-                          </td>
-                          <td className="pl-1 py-3 whitespace-nowrap text-left">
-                            <button
-                              onClick={() => handleEditClick(data._id)}
-                              className="text-primary hover:underline mr-2"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(data._id)}
-                              className="text-red1 hover:underline"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ) 
-                    }
+                  {Array.isArray(productDetails) &&
+                  productDetails.length > 0 ? (
+                    productDetails.map((data) => (
+                      <tr key={data._id} className="text-sm text-black">
+                        <td className="pl-4 py-3 whitespace-nowrap text-left">
+                          {data.product}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          {managers.find((i) => i._id === data.productManagerID)
+                            ?.name || "PM not assigned!"}
+                        </td>
+                        <td className="pl-1 py-3 whitespace-nowrap text-left">
+                          <button
+                            onClick={() => handleEditClick(data._id)}
+                            className="text-primary hover:underline mr-2"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(data._id)}
+                            className="text-red1 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="pl-4 py-3 text-center text-gray-500 italic"
+                      >
+                        No Product is Available, Create New Product
+                      </td>
+                    </tr>
                   )}
                 </tbody>
-              </table> */}
-              <table className="w-full min-w-[400px] sm:min-w-full border-collapse">
-  <thead className="bg-[#DDDDDD] text-black text-md font-bold sticky top-0 z-10">
-    <tr>
-      <th className="pl-4 py-3 text-left">Products</th>
-      <th className="pl-1 py-3 text-left">Manager</th>
-      <th className="pl-1 py-3 text-left">Actions</th>
-    </tr>
-  </thead>
-  <tbody className="bg-white divide-y divide-gray-200">
-    {(Array.isArray(productDetails) && productDetails.length > 0) ? (
-      productDetails.map((data) => (
-        <tr key={data._id} className="text-sm text-black">
-          <td className="pl-4 py-3 whitespace-nowrap text-left">
-            {data.product}
-          </td>
-          <td className="pl-1 py-3 whitespace-nowrap text-left">
-            {managers.find((i) => i._id === data.productManagerID)?.name || "PM not assigned!"}
-          </td>
-          <td className="pl-1 py-3 whitespace-nowrap text-left">
-            <button
-              onClick={() => handleEditClick(data._id)}
-              className="text-primary hover:underline mr-2"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDeleteClick(data._id)}
-              className="text-red1 hover:underline"
-            >
-              Delete
-            </button>
-          </td>
-        </tr>
-      ))
-    ) : (
-      <tr>
-        <td
-          colSpan={3}
-          className="pl-4 py-3 text-center text-gray-500 italic"
-        >
-          No Product is Available, Create New Product
-        </td>
-      </tr>
-    )}
-  </tbody>
-</table>
-
+              </table>
             </div>
           </div>
         </div>
@@ -598,7 +574,9 @@ export default function ProductManagementPage() {
                           }
                         : null
                     }
-                    onChange={(option) => option && setselectedManagerID(option.value)}
+                    onChange={(option) =>
+                      option && setselectedManagerID(option.value)
+                    }
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   ></Select>
 
@@ -748,12 +726,26 @@ export default function ProductManagementPage() {
 
                   <Select
                     options={managerOptions}
-                    value={selectedManagerID ? {
-                      value: selectedManagerID,
-                      label: managers.find(m => m._id === selectedManagerID)
-                        ? `${managers.find(m => m._id === selectedManagerID)?.name} - ${managers.find(m => m._id === selectedManagerID)?.email}`
-                        : ''
-                    } : null}
+                    value={
+                      selectedManagerID
+                        ? {
+                            value: selectedManagerID,
+                            label: managers.find(
+                              (m) => m._id === selectedManagerID
+                            )
+                              ? `${
+                                  managers.find(
+                                    (m) => m._id === selectedManagerID
+                                  )?.name
+                                } - ${
+                                  managers.find(
+                                    (m) => m._id === selectedManagerID
+                                  )?.email
+                                }`
+                              : "",
+                          }
+                        : null
+                    }
                     onChange={(option) => {
                       if (option) {
                         setselectedManagerID(option.value);
