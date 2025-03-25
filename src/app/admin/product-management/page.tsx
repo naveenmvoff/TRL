@@ -331,31 +331,42 @@ export default function ProductManagementPage() {
 
   const handleEditClick = (productID: string) => {
     setSelectedProductID(productID);
-
+  
     const selectedProduct = productDetails.find(
       (product) => product._id === productID
     );
-
+  
     if (selectedProduct) {
+      // Set basic product details
       setProductName(selectedProduct.product);
-      setselectedManagerID(selectedProduct.productManagerID);
-
-      // Find the manager and set their name
-      const manager = managers.find(
-        (m) => m._id === selectedProduct.productManagerID
-      );
-      setSelectedManagerName(
-        manager ? `${manager.name} - ${manager.email}` : ""
-      );
-
-      setSelectedViewersID(selectedProduct.productViewer);
+      
+      // Set manager details
+      const managerId = selectedProduct.productManagerID;
+      if (managerId) {
+        // Only set manager and viewers if there is a manager
+        setselectedManagerID(managerId);
+        const manager = managers.find((m) => m._id === managerId);
+        setSelectedManagerName(
+          manager ? `${manager.name} - ${manager.email}` : ""
+        );
+        // Set viewers only if there's a manager
+        setSelectedViewersID(selectedProduct.productViewer);
+      } else {
+        // Clear manager and viewers if no manager
+        setselectedManagerID('');
+        setSelectedManagerName('');
+        setSelectedViewersID([]);
+      }
+      
+      // Set other fields
       setDescription(selectedProduct.description);
       setProblemStatement(selectedProduct.problemStatement);
       setSolutionExpected(selectedProduct.solutionExpected);
     }
-
+  
     setShowPopupEdit(true);
   };
+  
 
   const handleUpdateProduct = async () => {
     setLoading(true);
@@ -426,6 +437,25 @@ export default function ProductManagementPage() {
     value: manager._id,
     label: `${manager.name} - ${manager.email}`,
   }));
+
+  // When manager is selected, they should also be added as a viewer
+  const handleManagerSelect = (option: { value: string; label: string } | null) => {
+    if (option) {
+      const newManagerId = option.value;
+      setselectedManagerID(newManagerId);
+      setSelectedManagerName(option.label);
+      
+      // Set only the manager as viewer
+      setselectedViewers([newManagerId]); // For create form
+      setSelectedViewersID([newManagerId]); // For edit form
+    } else {
+      // If manager is cleared, clear all viewers too
+      setselectedManagerID('');
+      setSelectedManagerName('');
+      setselectedViewers([]);
+      setSelectedViewersID([]);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -574,9 +604,7 @@ export default function ProductManagementPage() {
                           }
                         : null
                     }
-                    onChange={(option) =>
-                      option && setselectedManagerID(option.value)
-                    }
+                    onChange={handleManagerSelect}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   ></Select>
 
@@ -588,13 +616,18 @@ export default function ProductManagementPage() {
                     options={test}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    onChange={(selectedOptions) =>
-                      setselectedViewers(
-                        selectedOptions.map((option) => option.value)
-                      )
-                    }
+                    value={test.filter(option => selectedViewers.includes(option.value))}
+                    onChange={(selectedOptions) => {
+                      const selectedValues = selectedOptions?.map(option => option.value) || [];
+                      // Always include the manager
+                      if (selectedManagerID && !selectedValues.includes(selectedManagerID)) {
+                        selectedValues.push(selectedManagerID);
+                      }
+                      setselectedViewers(selectedValues);
+                    }}
+                    isDisabled={!selectedManagerID} // Disable if no manager selected
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                  ></Select>
+                  />
 
                   <p className="text-md font-regular text-black mt-2">
                     Description <span className="text-red-500">*</span>
@@ -746,12 +779,7 @@ export default function ProductManagementPage() {
                           }
                         : null
                     }
-                    onChange={(option) => {
-                      if (option) {
-                        setselectedManagerID(option.value);
-                        setSelectedManagerName(option.label);
-                      }
-                    }}
+                    onChange={handleManagerSelect}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   />
 
@@ -762,11 +790,16 @@ export default function ProductManagementPage() {
                     options={test}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    onChange={(selectedOptions) =>
-                      setSelectedViewersID(
-                        selectedOptions.map((option) => option.value)
-                      )
-                    }
+                    value={test.filter(option => selectedViewersID.includes(option.value))}
+                    onChange={(selectedOptions) => {
+                      const selectedValues = selectedOptions?.map(option => option.value) || [];
+                      // Ensure manager is always included in viewers
+                      if (selectedManagerID && !selectedValues.includes(selectedManagerID)) {
+                        selectedValues.push(selectedManagerID);
+                      }
+                      setSelectedViewersID(selectedValues);
+                    }}
+                    isDisabled={!selectedManagerID}
                     defaultValue={test.filter((option) =>
                       selectedViewersID.find((id) => id == option.value)
                     )}

@@ -1,6 +1,12 @@
 "use client";
 
-// Add or update interfaces
+// // Add or update interfaces
+// interface SidebarProps {
+//   role: string;
+//   currentSection: string;
+//   onSectionChange: (section: string) => void;
+// }
+
 interface Product {
   _id: string;
   product: string;
@@ -348,7 +354,6 @@ export default function ProductOverview() {
         <NavBar role="Product Manager" />
         <div className="flex h-[calc(100vh-4rem)]">
           <Sidebar
-            role="Product Manager"
             currentSection={activeSection}
             onSectionChange={changeSection}
           />
@@ -474,10 +479,10 @@ export default function ProductOverview() {
   console.log("activeSection", activeSection);
 
   return (
-    <div className="min-h-screen bg-white w-full overflow-hidden">
+    <div className="h-screen w-full overflow-hidden bg-white">
       <NavBar role="Product Manager" />
       <div className="flex h-[calc(100vh-4rem)]">
-        <Sidebar
+        <Sidebar 
           role="Product Manager"
           currentSection={activeSection}
           onSectionChange={changeSection}

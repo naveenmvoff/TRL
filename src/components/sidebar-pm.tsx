@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-// Simplified props interface - removed unused props
+interface SidebarProps {
+  role?: string;
+  currentSection?: string;
+  onSectionChange?: (section: string) => void;
+}
 
-export default function Sidebar() {
+const Sidebar: React.FC<SidebarProps> = ({ }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showPopup, setShowPopup] = useState(false);
@@ -34,7 +38,7 @@ export default function Sidebar() {
           }`}
           onClick={() => router.push("/productManager/dashboard")}
         >
-          Products
+          My Products
         </div>
 
         <div
@@ -46,7 +50,7 @@ export default function Sidebar() {
           }`}
           onClick={() => router.push("/productManager/all-product-overview")}
         >
-          Products overview
+          Analytics
         </div>
 
         <div
@@ -58,7 +62,7 @@ export default function Sidebar() {
           }`}
           onClick={() => router.push("/productManager/all-product-details")}
         >
-          Products details
+          Overview
         </div>
       </div>
 
@@ -98,4 +102,6 @@ export default function Sidebar() {
       )}
     </div>
   );
-}
+};
+
+export default Sidebar;

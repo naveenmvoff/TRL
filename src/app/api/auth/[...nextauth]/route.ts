@@ -4,6 +4,15 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcryptjs";
 
+interface UserDocument {
+  _id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: string;
+  factory: string;
+  __v: number;
+}
 
 declare module 'next-auth' {
     interface User {
@@ -26,8 +35,8 @@ const handler = NextAuth({
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -36,7 +45,7 @@ const handler = NextAuth({
 
         try {
           await connectDB();
-          const user = await User.findOne({ email: credentials.email }).lean().exec();
+          const user = await User.findOne({ email: credentials.email }).lean().exec() as UserDocument | null;
 
           if (!user) {
             throw new Error("Invalid email or password");
