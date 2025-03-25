@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-export default function SidebarPM() {
+// Simplified props interface - removed unused props
+
+export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [showPopup, setShowPopup] = useState(false);
@@ -19,27 +21,6 @@ export default function SidebarPM() {
       console.error("Error signing out:", error);
     }
   };
-
- 
-  // const isTRLLevel = /^\/productManager\/product-details\/\w+\/\w+$/.test(
-  //   pathname
-  // );
-
-  // Extract product ID from the path (for TRL Level navigation)
-  // const pathSegments = pathname.split("/");
-  // const productId = pathSegments[pathSegments.length - 2];
-
-  // const handleGoToProductDetails = () => {
-  //   if (isTRLLevel && productId) {
-  //     // Go back to product details using product ID
-  //     router.push(`/productManager/product-details/${productId}`);
-  //   } else {
-  //     // Navigate normally if already in product details
-  //     router.push(
-  //       `/productManager/product-details/${productId || "default-id"}`
-  //     );
-  //   }
-  // };
 
   return (
     <div className="min-w-[180px] max-w-[240px] flex-shrink-0 border-r bg-white flex flex-col">
@@ -57,40 +38,28 @@ export default function SidebarPM() {
         </div>
 
         <div
-          className={`px-3 py-2 text-sm text-center rounded-md cursor-not-allowed ${
-            pathname.startsWith("/productManager/product-overview/") ||
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
+            pathname.startsWith("/productManager/all-product-overview/") ||
+            pathname === "/productManager/all-product-overview"
+              ? "bg-primary text-white"
+              : "bg-white text-black border hover:bg-secondary"
+          }`}
+          onClick={() => router.push("/productManager/all-product-overview")}
+        >
+          Products overview
+        </div>
+
+        <div
+          className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
+            pathname.startsWith("/productManager/all-product-details") ||
             pathname === "/productManager/product-overview"
               ? "bg-primary text-white"
               : "bg-white text-black border hover:bg-secondary"
           }`}
-          // onClick={() => router.push("/productManager/product-overview")}
+          onClick={() => router.push("/productManager/all-product-details")}
         >
-          Product Overview
+          Products details
         </div>
-
-        {/* {(isProductDetails || isTRLLevel) && (
-          <div
-            className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer ${
-              /^\/productManager\/product-details\/\w+$/.test(pathname)
-                ? "bg-primary text-white"
-                : "bg-white text-black border hover:bg-secondary"
-            }`}
-            onClick={handleGoToProductDetails}
-          >
-            Product Details
-          </div>
-        )}
-
-        {isTRLLevel && (
-          <div
-            className="px-3 py-2 text-sm text-center rounded-md cursor-pointer bg-primary text-white"
-            onClick={() =>
-              router.push(`/productManager/product-details/${"id"}/${"trl-id"}`)
-            } // Replace `"id"` and `"trl-id"` with actual IDs if needed
-          >
-            TRL Level
-          </div>
-        )} */}
       </div>
 
       {/* Logout Button */}

@@ -713,7 +713,7 @@ export default function ProductManager() {
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
                       <p className="text-md font-regular text-black mt-2 flex items-center">
-                        Description
+                        Description <span className="text-red-500">*</span>
                       </p>
                       <textarea
                         value={formData?.description || ""}
@@ -754,7 +754,7 @@ export default function ProductManager() {
                       </h1>
 
                       <p className="text-md font-regular text-black mt-2">
-                        Current Update
+                        Current Update <span className="text-red-500">*</span>
                       </p>
                       <textarea
                         value={formData?.currentUpdate || ""}
@@ -917,7 +917,7 @@ export default function ProductManager() {
                       <div className="flex flex-row gap-4">
                         <div>
                           <p className="text-md font-regular text-black mt-2">
-                            Start Date
+                            Start Date <span className="text-red-500">*</span>
                           </p>
                           <DatePicker
                             selected={formData?.startDate || null}
@@ -958,7 +958,7 @@ export default function ProductManager() {
                             {touchedFields.startDate &&
                               !formData?.startDate && (
                                 <span className="text-red-500 text-sm ml-1">
-                                  *Required
+                                  Required
                                 </span>
                               )}
                           </h1>
@@ -966,7 +966,7 @@ export default function ProductManager() {
 
                         <div>
                           <p className="text-md font-regular text-black mt-2">
-                            Estimated Date
+                            Estimated Date <span className="text-red-500">*</span>
                           </p>
                           <DatePicker
                             selected={formData?.estimatedDate || null}
@@ -1006,7 +1006,7 @@ export default function ProductManager() {
                             {touchedFields.estimatedDate &&
                               !formData?.estimatedDate && (
                                 <span className="text-red-500 text-sm ml-1">
-                                  *Required
+                                  Required
                                 </span>
                               )}
                           </h1>

@@ -56,7 +56,7 @@ export default function Sidebar({
           }`}
           onClick={() => handleClick("/stakeholder/product", "products")}
         >
-          Products
+          Product details
         </div>
       </div>
       <div className="mt-auto p-4 ">

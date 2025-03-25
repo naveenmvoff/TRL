@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { IoArrowBackCircle } from "react-icons/io5";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
 import NavBar from "@/components/navbar/navbar";
-import Sidebar from "@/components/sidebar-stakeholders";
+import Sidebar from "@/components/sidebar-pm";
 import Expand from "@/components/expand"; // Add this import
 
 import { useParams, useRouter, usePathname } from "next/navigation";
@@ -310,7 +310,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     subLevels: {subLevelName: string; subLevelNumber: number; _id: string}[]
   ) => {
     router.push(
-      `/stakeholder/product/${productId}/${trlId}?name=${encodeURIComponent(
+      `/productManager/all-product-details/${productId}/${trlId}?name=${encodeURIComponent(
         levelName
       )}&level=${levelNumber}&subLevels=${encodeURIComponent(
         JSON.stringify(subLevels)
@@ -331,13 +331,13 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   };
 
   const handleIndexChange = (index: number, newProductId: string) => {
-    router.push(`/stakeholder/product/${newProductId}`);
+    router.push(`/productManager/all-product-details/${newProductId}`);
   };
 
   if (isLoading) {
     return (
       <div className="h-screen w-full overflow-hidden bg-white">
-        <NavBar role="Stakeholder" />
+        <NavBar role="Product Manager" />
         <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
           <Sidebar />
           <div className="flex-grow overflow-hidden">
@@ -350,7 +350,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-white w-full overflow-hidden">
-      <NavBar role="Stakeholder" />
+      <NavBar role="Product Manager" />
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 space-y-4 p-6 pt-6 overflow-auto bg-secondary">
@@ -360,7 +360,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               
                 <IoArrowBackCircle
                 
-                    onClick={() => router.push(`/stakeholder/product`)}
+                    onClick={() => router.push(`/productManager/all-product-details`)}
                   className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
                   size={35}
                 />
@@ -369,7 +369,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
                   <h1
                     className="text-gray-200 hover:cursor-pointer transition-all"
-                    onClick={() => router.push(`/stakeholder/product`)}
+                    onClick={() => router.push(`/productManager/all-product-details`)}
                   >
                     Home
                   </h1>

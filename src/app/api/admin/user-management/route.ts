@@ -110,21 +110,56 @@ export async function POST(req: Request) {
         },
       });
 
+      // const mailOptions = {
+      //   from: "naveen.m.ihub@snsgroups.com",
+      //   to,
+      //   subject: "Your New Account Credentials for MVP Tracker",
+      //   html: `
+      //     <p>Hello ${userName},</p>
+      //     <p>Your account has been created successfully. Here are your login details:</p>
+      //     <ul>
+      //       <li><strong>Website:</strong> https://trl-two.vercel.app </li>
+      //       <li><strong>Email:</strong> ${to}</li>
+      //       <li><strong>Password:</strong> ${password}</li>
+      //     </ul>
+      //     <p>You couldn't change your password, so be sure to keep it safe!</p>
+      //     <p>Best regards,<br />MVP Tracker</p>
+      //   `,
+      // };
+
       const mailOptions = {
         from: "naveen.m.ihub@snsgroups.com",
         to,
-        subject: "Your New Account Credentials",
+        subject: "Welcome to MVP Tracker – Your Account Credentials",
         html: `
-          <p>Hello ${userName},</p>
-          <p>Your account has been created successfully. Here are your login details:</p>
-          <ul>
-            <li><strong>Email:</strong> ${to}</li>
-            <li><strong>Password:</strong> ${password}</li>
-          </ul>
-          <p>Please change your password after your first login.</p>
-          <p>Best regards,<br />The Team</p>
+          <p>Hello <strong>${userName}</strong>,</p>
+          <p>Welcome to <strong>MVP Tracker</strong>! Your account has been created successfully, and you can now access the platform using the login details below:</p>
+          
+          <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>Website:</strong></td>
+              <td style="padding: 8px; border: 1px solid #ddd;"><a href="https://trl-two.vercel.app" target="_blank" style="color: #1a73e8; text-decoration: none;">https://trl-two.vercel.app</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>Email:</strong></td>
+              <td style="padding: 8px; border: 1px solid #ddd;">${to}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>Password:</strong></td>
+              <td style="padding: 8px; border: 1px solid #ddd;">${password}</td>
+            </tr>
+          </table>
+      
+          <p><strong>Important:</strong> You cannot change your password at the moment, so please keep it secure and do not share it with anyone.</p>
+      
+          <p>If you encounter any issues or have any questions, feel free to reach out to our support team.</p>
+      
+          <p>We’re excited to have you on board and look forward to helping you track your progress efficiently!</p>
+      
+          <p>Best regards,<br />The MVP Tracker Team</p>
         `,
       };
+      
 
       await transporter.sendMail(mailOptions);
       console.log("Email sent successfully!");
