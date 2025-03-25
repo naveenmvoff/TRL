@@ -31,16 +31,15 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error("Email and password are required");
         }
 
         try {
-          // console.log("checking user");
           await connectDB();
-          const user = await User.findOne({ email: credentials.email });
-          // console.log("User Data", user);
+          const user = await User.findOne({ email: credentials.email }).lean().exec();
+
           if (!user) {
-            return null;
+            throw new Error("Invalid email or password");
           }
 
           const passwordMatch = await bcrypt.compare(
@@ -49,11 +48,10 @@ const handler = NextAuth({
           );
 
           if (!passwordMatch) {
-            return null;
+            throw new Error("Invalid email or password");
           }
 
           return {
-            
             id: user._id.toString(),
             email: user.email,
             name: user.name,
@@ -61,17 +59,15 @@ const handler = NextAuth({
             factory: user.factory,
           };
         } catch (error) {
-          console.log("Error: ", error);
-          return null;
+          console.error("Authentication error:", error);
+          throw error;
         }
       },
     }),
   ],
   session: {
-    
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -108,6 +104,7 @@ const handler = NextAuth({
   pages: {
     signIn: "/",
     signOut: "/",
+    error: "/auth/error",
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
