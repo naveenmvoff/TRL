@@ -1,7 +1,6 @@
 "use client"; // This is required at the top for client components in Next.js App Router
 
-import React, { useState, useEffect } from "react";
-// import { Pencil } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   IoArrowBackCircle,
   // IoChevronForwardCircle,
@@ -14,9 +13,6 @@ import Expand from "@/components/expand"; // Add this import
 
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { ObjectId } from "mongoose";
-// import { connect } from "http2";
-// import { NextRequest, NextResponse } from "next/server";
-// import TrlLevelData from "@/models/trlLevelData";
 import SwitchTrl from "@/components/switch-trl";
 
 interface TRLItem {
@@ -71,11 +67,18 @@ interface TrlLevelDetail {
   startDate: string;
   estimatedDate: string;
   extendedDate: string;
+  status: string;
 }
 
 interface SectionType {
   title: string;
   content: string | undefined;
+}
+
+interface ChartData {
+  name: string;
+  progress: number;
+  productID: string;
 }
 
 const LoadingSpinner = () => (
@@ -100,13 +103,13 @@ const calculateOverallStatus = (levelDetails: TrlLevelDetail[]) => {
   if (!levelDetails || levelDetails.length === 0) return "Pending";
 
   const hasCompleted = levelDetails.some(
-    (detail) => detail.demoStatus === "Completed"
+    (detail) => detail.status === "Completed"
   );
   const hasInProgress = levelDetails.some(
-    (detail) => detail.demoStatus === "In Progress"
+    (detail) => detail.status === "In Progress"
   );
   const allCompleted = levelDetails.every(
-    (detail) => detail.demoStatus === "Completed"
+    (detail) => detail.status === "Completed"
   );
 
   if (allCompleted) return "Completed";
@@ -123,6 +126,8 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
   const [productIds, setProductIds] = useState<string[]>([]);
 
+  console.log("trlItems==", trlItems)
+  
   const [productId, setProductId] = useState<string>(() => {
     if (clientSideParams && typeof clientSideParams.id === "string") {
       return clientSideParams.id;
@@ -132,6 +137,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [selectedSection, setSelectedSection] = useState<SectionType | null>(null);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
 
   const fetchTrlMasterData = async () => {
     try {
@@ -145,13 +151,16 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
-  
+      
       const data = await response.json();
+      console.log("data===", data)
       
       if (data.success && Array.isArray(data.data)) {
         const sortedData = data.data.sort((a: TrlMasterItem, b: TrlMasterItem) => 
           a.trlLevelNumber - b.trlLevelNumber
         );
+
+        console.log("sortedData", sortedData)
         
         setTrlItems(
           sortedData.map((item: TrlMasterItem) => ({
@@ -179,9 +188,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       const response = await fetch(
         `/api/product-manager/product?id=${productId}`
       );
-      console.log("ProductDetails - Got responce", response);
       const data = await response.json();
-      console.log("ProductDetails : ", data);
       setProductDetails(data);
     } catch (error) {
       console.error("Error fetching product details:", error);
@@ -212,48 +219,47 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   
       const [masterData, detailsData] = responses;
   
-      if (!masterResponse.ok || !detailsResponse.ok || !masterData.success || !detailsData.success) {
-        throw new Error(masterData.error || detailsData.error || 'One or more API requests failed');
-      }
-  
       if (masterData.success && detailsData.success) {
-        const combinedData = masterData.data
-          .sort((a: TrlMasterItem, b: TrlMasterItem) => a.trlLevelNumber - b.trlLevelNumber)
-          .map((masterItem: TrlMasterItem) => {
-            const levelDetails = detailsData.data.filter(
-              (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
-            );
+        // Sort master data by TRL level number
+        const sortedMasterData = masterData.data.sort(
+          (a: TrlMasterItem, b: TrlMasterItem) => a.trlLevelNumber - b.trlLevelNumber
+        );
 
-            const sortedSubLevels = [...(masterItem.subLevels || [])].sort(
-              (a, b) => a.subLevelNumber - b.subLevelNumber
-            );
+        const combinedData = sortedMasterData.map((masterItem: TrlMasterItem) => {
+          const levelDetails = detailsData.data.filter(
+            (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
+          );
 
-            const firstSubLevel = sortedSubLevels[0];
-            const lastSubLevel = sortedSubLevels[sortedSubLevels.length - 1];
+          const sortedSubLevels = [...(masterItem.subLevels || [])].sort(
+            (a, b) => a.subLevelNumber - b.subLevelNumber
+          );
 
-            const firstSubLevelDetails = levelDetails.find(
-              (d: TrlLevelDetail) => d.subLevelId === firstSubLevel?._id
-            );
-            const lastSubLevelDetails = levelDetails.find(
-              (d: TrlLevelDetail) => d.subLevelId === lastSubLevel?._id
-            );
+          const firstSubLevel = sortedSubLevels[0];
+          const lastSubLevel = sortedSubLevels[sortedSubLevels.length - 1];
 
-            return {
-              _id: masterItem._id,
-              TrlLevelNumber: masterItem.trlLevelNumber,
-              trlLevelName: masterItem.trlLevelName,
-              subLevels: sortedSubLevels,
-              description: firstSubLevelDetails?.description || "",
-              status: calculateOverallStatus(levelDetails),
-              documentationLink: firstSubLevelDetails?.documentationLink || "",
-              otherNotes: firstSubLevelDetails?.otherNotes || "",
-              demoRequired: firstSubLevelDetails?.demoRequired || false,
-              demoStatus: firstSubLevelDetails?.demoStatus || "Pending",
-              startDate: firstSubLevelDetails?.startDate || "",
-              estimatedDate: lastSubLevelDetails?.estimatedDate || "",
-              extendedDate: lastSubLevelDetails?.extendedDate || "",
-            };
-          });
+          const firstSubLevelDetails = levelDetails.find(
+            (d: TrlLevelDetail) => d.subLevelId === firstSubLevel?._id
+          );
+          const lastSubLevelDetails = levelDetails.find(
+            (d: TrlLevelDetail) => d.subLevelId === lastSubLevel?._id
+          );
+
+          return {
+            _id: masterItem._id,
+            TrlLevelNumber: masterItem.trlLevelNumber,
+            trlLevelName: masterItem.trlLevelName,
+            subLevels: sortedSubLevels,
+            description: firstSubLevelDetails?.description || "",
+            status: calculateOverallStatus(levelDetails),
+            documentationLink: firstSubLevelDetails?.documentationLink || "",
+            otherNotes: firstSubLevelDetails?.otherNotes || "",
+            demoRequired: firstSubLevelDetails?.demoRequired || false,
+            demoStatus: firstSubLevelDetails?.demoStatus || "Pending",
+            startDate: firstSubLevelDetails?.startDate || "",
+            estimatedDate: lastSubLevelDetails?.estimatedDate || "",
+            extendedDate: lastSubLevelDetails?.extendedDate || "",
+          };
+        });
 
         setTrlItems(combinedData);
       } else {
@@ -286,19 +292,14 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        console.log("Starting data fetch...");
         const savedIds = localStorage.getItem("dashboardProductIds");
         if (savedIds) {
           setProductIds(JSON.parse(savedIds));
         }
-        console.log("Fetching TRL master data...");
         await fetchTrlMasterData();
-        console.log("Fetching product details...");
         await fetchProductDetails();
-        console.log("Fetching TRL details...");
         await fetchTrlDetails();
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -307,13 +308,39 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     fetchData();
   }, [productId]);
 
-  const calculateProgress = () => {
-    if (!trlItems || trlItems.length === 0) return 0;
-    const completedItems = trlItems.filter((item) => item.status === "Completed").length;
-    return Math.round((completedItems / trlItems.length) * 100) || 0;
-  };
+  useEffect(() => {
+    // Initial load
+    const loadChartData = () => {
+      const savedData = localStorage.getItem('productProgressData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setChartData(parsedData);
+      }
+    };
 
-  const progressPercentage = calculateProgress();
+    // Load initial data
+    loadChartData();
+
+    // Set up storage event listener for updates
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'productProgressData') {
+        const newData = event.newValue ? JSON.parse(event.newValue) : [];
+        setChartData(newData);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  const currentProductProgress = useMemo(() => 
+    chartData.find(item => item.productID === productId)?.progress ?? 0
+  , [chartData, productId]);
+
+  const progressPercentage = currentProductProgress;
 
   const handleTRLClick = (
     productId: string,
@@ -342,6 +369,65 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const handleIndexChange = (index: number, newProductId: string) => {
     router.push(`/productManager/product-details/${newProductId}`);
   };
+
+  const renderTableBody = () => (
+    <tbody className="divide-y divide-gray-200 bg-white text-black">
+      {trlItems.map((item, index) => (
+        <tr
+          key={item._id}
+          onClick={() =>
+            handleTRLClick(
+              productId,
+              item._id,
+              item.trlLevelName || "",
+              item.TrlLevelNumber || 0,
+              item.subLevels || []
+            )
+          }
+          className={`${
+            index % 2 === 0 ? "bg-gray-50" : "bg-white"
+          } text-sm cursor-pointer hover:bg-gray-200 transition`}
+        >
+          <td className="pl-4 py-3 whitespace-nowrap">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium">
+                {item.TrlLevelNumber}
+              </div>
+              <span className="font-medium">TRL</span>
+            </div>
+          </td>
+          <td className="pl-4 py-3 whitespace-nowrap font-medium">
+            {item.trlLevelName}
+          </td>
+          <td className="pl-4 py-3 whitespace-nowrap">
+            {formatDate(item.startDate)}
+          </td>
+          <td className="pl-4 py-3 whitespace-nowrap">
+            {formatDate(item.estimatedDate)}
+          </td>
+          <td className="pl-4 py-3 whitespace-nowrap">
+            {formatDate(item.extendedDate)}
+          </td>
+          <td className="pl-4 py-3 whitespace-nowrap">
+            <div className="flex items-center space-x-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  item.status === "Completed"
+                    ? "bg-green-500"
+                    : item.status === "In Progress"
+                    ? "bg-yellow-500"
+                    : "bg-gray-400"
+                }`}
+              ></span>
+              <span className="text-xs font-medium">
+                {item.status}
+              </span>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  );
 
   if (isLoading) {
     return (
@@ -555,65 +641,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white text-black">
-                      {trlItems.map((item, index) => (
-                        <tr
-                          key={item._id}
-                          onClick={() =>
-                            handleTRLClick(
-                              productId,
-                              item._id,
-                              item.trlLevelName || "",
-                              item.TrlLevelNumber || 0,
-                              item.subLevels || []
-                            )
-                          }
-                          className={`${
-                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          } text-sm cursor-pointer hover:bg-gray-200 transition`}
-                        >
-                          <td className="pl-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium">
-                                {item.TrlLevelNumber}
-                              </div>
-                              <span className="font-medium">TRL</span>
-                            </div>
-                          </td>
-                          <td className="pl-4 py-3 whitespace-nowrap font-medium">
-                            {item.trlLevelName}
-         
-                          </td>
-                          <td className="pl-4 py-3 whitespace-nowrap">
-                            {formatDate(item.startDate)}
-                          </td>
-                          <td className="pl-4 py-3 whitespace-nowrap">
-                            {formatDate(item.estimatedDate)}
-                          </td>
-                          <td className="pl-4 py-3 whitespace-nowrap">
-                            {formatDate(item.extendedDate)}
-                          </td>
-                          <td className="pl-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className={`w-2.5 h-2.5 rounded-full ${
-                                  item.status === "Completed"
-                                    ? "bg-green-500"
-                                    : item.status === "In Progress"
-                                    ? "bg-yellow-500"
-                                    : "bg-gray-400"
-                                }`}
-                              ></span>
-                              <span className="text-xs font-medium">
-                                {item.status}
-                              </span>
-        
-                            </div>
-                          </td>
-       
-                        </tr>
-                      ))}
-                    </tbody>
+                    {renderTableBody()}
                   </table>
                   {trlItems.length === 0 && (
                     <div className="py-6 text-center text-gray-500">

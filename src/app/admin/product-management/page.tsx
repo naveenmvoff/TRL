@@ -124,7 +124,7 @@ export default function ProductManagementPage() {
   // TO Get ONLY PM DATA
   const pmData = async () => {
     try {
-      const response = await fetch("/api/admin/pm-data", {
+      const response = await fetch(`/api/admin/pm-data?userID=${userID}`, {
         method: "GET",
       });
       if (response.ok) {
@@ -165,7 +165,7 @@ export default function ProductManagementPage() {
   // TO Get ALL USER DATA
   const userData = async () => {
     try {
-      const response = await fetch("/api/admin/user-data", {
+      const response = await fetch(`/api/admin/user-data?userID=${userID}`, {
         method: "GET",
       });
       if (response.ok) {
@@ -428,7 +428,7 @@ export default function ProductManagementPage() {
     setSolutionExpected("");
   };
 
-  const test = accessUsers.map((accessUsers) => ({
+  const viewerFilter = accessUsers.map((accessUsers) => ({
     value: accessUsers._id,
     label: `${accessUsers.name} - ${accessUsers.email}`,
   }));
@@ -613,10 +613,10 @@ export default function ProductManagementPage() {
                   </p>
 
                   <Select
-                    options={test}
+                    options={viewerFilter}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    value={test.filter(option => selectedViewers.includes(option.value))}
+                    value={viewerFilter.filter(option => selectedViewers.includes(option.value))}
                     onChange={(selectedOptions) => {
                       const selectedValues = selectedOptions?.map(option => option.value) || [];
                       // Always include the manager
@@ -787,10 +787,10 @@ export default function ProductManagementPage() {
                     Select Viewers
                   </p>
                   <Select
-                    options={test}
+                    options={viewerFilter}
                     isMulti={true}
                     closeMenuOnSelect={false}
-                    value={test.filter(option => selectedViewersID.includes(option.value))}
+                    value={viewerFilter.filter(option => selectedViewersID.includes(option.value))}
                     onChange={(selectedOptions) => {
                       const selectedValues = selectedOptions?.map(option => option.value) || [];
                       // Ensure manager is always included in viewers
@@ -800,7 +800,7 @@ export default function ProductManagementPage() {
                       setSelectedViewersID(selectedValues);
                     }}
                     isDisabled={!selectedManagerID}
-                    defaultValue={test.filter((option) =>
+                    defaultValue={viewerFilter.filter((option) =>
                       selectedViewersID.find((id) => id == option.value)
                     )}
                     className="w-2/3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"

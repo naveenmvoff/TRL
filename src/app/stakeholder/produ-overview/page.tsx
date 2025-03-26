@@ -403,6 +403,8 @@ export default function ProductOverview() {
     };
 
     const chartData = processChartData(progressData);
+    localStorage.setItem('productProgressData', JSON.stringify(chartData));
+    console.log("chartData", chartData)
 
     return (
       <div className="w-full h-full">
@@ -480,7 +482,11 @@ export default function ProductOverview() {
         <div className="flex-1 space-y-4 p-8 pt-6 overflow-auto bg-secondary">
           <div className="flex items-center justify-between space-y-2">
             <h2 className="text-3xl font-bold tracking-tight text-primary">
-              Hello, {Session?.user?.name || "Stakeholder"}
+              {/* Hello, {Session?.user?.name || "Stakeholder"} */}
+              {Session?.user?.name || "Product Manager"}{" "}
+              <span className="text-xl font-light">
+                here’s a quick look at the products
+              </span>
             </h2>
           </div>
 

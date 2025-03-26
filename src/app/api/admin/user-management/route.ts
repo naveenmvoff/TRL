@@ -110,23 +110,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // const mailOptions = {
-      //   from: "naveen.m.ihub@snsgroups.com",
-      //   to,
-      //   subject: "Your New Account Credentials for MVP Tracker",
-      //   html: `
-      //     <p>Hello ${userName},</p>
-      //     <p>Your account has been created successfully. Here are your login details:</p>
-      //     <ul>
-      //       <li><strong>Website:</strong> https://trl-two.vercel.app </li>
-      //       <li><strong>Email:</strong> ${to}</li>
-      //       <li><strong>Password:</strong> ${password}</li>
-      //     </ul>
-      //     <p>You couldn't change your password, so be sure to keep it safe!</p>
-      //     <p>Best regards,<br />MVP Tracker</p>
-      //   `,
-      // };
-
       const mailOptions = {
         from: "naveen.m.ihub@snsgroups.com",
         to,

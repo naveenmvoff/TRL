@@ -74,6 +74,12 @@ interface SectionType {
   icon: React.ReactNode;
 }
 
+interface ChartDataItem {
+  name: string;
+  progress: number;
+  productID: string;
+}
+
 const LoadingSpinner = () => (
   <div className="flex flex-col justify-center items-center h-screen">
     <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600"></div>
@@ -91,6 +97,7 @@ const formatDate = (dateString: string | undefined) => {
     year: "numeric",
   });
 };
+
 
 const calculateOverallStatus = (levelDetails: TrlLevelDetail[]) => {
   if (!levelDetails || levelDetails.length === 0) return "Pending";
@@ -125,6 +132,46 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     }
     return params.id;
   });
+
+  const [chartData, setChartData] = useState<Array<{name: string, progress: number, productID: string}>>([]);
+  const [currentProgress, setCurrentProgress] = useState(0);
+
+  // Add effect to listen for localStorage changes
+  useEffect(() => {
+    // Initial load
+    const loadChartData = () => {
+      const savedData = localStorage.getItem('productProgressData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setChartData(parsedData);
+        // Find and set current product's progress using proper type
+        const currentProduct = parsedData.find((item: ChartDataItem) => item.productID === productId);
+        if (currentProduct) {
+          setCurrentProgress(currentProduct.progress);
+        }
+      }
+    };
+
+    loadChartData();
+
+    // Set up storage event listener for real-time updates
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'productProgressData' && event.newValue) {
+        const newData = JSON.parse(event.newValue);
+        setChartData(newData);
+        const currentProduct = newData.find((item: ChartDataItem) => item.productID === productId);
+        if (currentProduct) {
+          setCurrentProgress(currentProduct.progress);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [productId]);
 
   useEffect(() => {
     if (clientSideParams && typeof clientSideParams.id === "string") {
@@ -233,7 +280,12 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         const detailsData = await detailsResponse.json();
 
         if (masterData.success && detailsData.success) {
-          const combinedData = masterData.data.map((masterItem: TrlMasterItem) => {
+          // Sort master data by TRL level number
+          const sortedMasterData = masterData.data.sort(
+            (a: TrlMasterItem, b: TrlMasterItem) => a.trlLevelNumber - b.trlLevelNumber
+          );
+
+          const combinedData = sortedMasterData.map((masterItem: TrlMasterItem) => {
             const levelDetails = detailsData.data.filter(
               (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
             );
@@ -334,6 +386,18 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     router.push(`/stakeholder/product/${newProductId}`);
   };
 
+  // Add this useEffect after your other useEffects
+  useEffect(() => {
+    // Monitor chartData changes for debugging and future features
+    console.log('Chart data updated:', chartData);
+    
+    // This data will be used for chart visualizations and progress tracking
+    const totalProducts = chartData.length;
+    const averageProgress = chartData.reduce((sum, item) => sum + item.progress, 0) / (totalProducts || 1);
+    
+    console.log('Average progress across all products:', averageProgress);
+  }, [chartData]);
+
   if (isLoading) {
     return (
       <div className="h-screen w-full overflow-hidden bg-white">
@@ -429,7 +493,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-3xl font-bold text-gray-800">
-                      {progressPercentage}%
+                      {currentProgress}%
                     </span>
                     <span className="text-xs text-gray-500 mt-1">
                       Completed

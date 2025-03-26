@@ -1,12 +1,5 @@
 "use client";
 
-// // Add or update interfaces
-// interface SidebarProps {
-//   role: string;
-//   currentSection: string;
-//   onSectionChange: (section: string) => void;
-// }
-
 interface Product {
   _id: string;
   product: string;
@@ -114,9 +107,11 @@ export default function ProductOverview() {
     ProductProgress[]
   >([]);
 
-  console.log("products ", products);
-  console.log("trlItemsData ", trlItemsData);
-  console.log("productProgressData ", productProgressData);
+  console.log("trlLevels---------", trlLevels);
+  console.log("products---------", products);
+  console.log("trlItemsData---------", trlItemsData);
+  console.log("productProgressData---------", productProgressData);
+
   // State for active section
 
   const [activeSection, setActiveSection] = useState<string>("overview");
@@ -412,6 +407,10 @@ export default function ProductOverview() {
     };
 
     const chartData = processChartData(progressData);
+    console.log("chartData", chartData);
+
+    // Store chart data in localStorage
+    localStorage.setItem("productProgressData", JSON.stringify(chartData));
 
     return (
       <div className="w-full h-full">
@@ -482,15 +481,18 @@ export default function ProductOverview() {
     <div className="h-screen w-full overflow-hidden bg-white">
       <NavBar role="Product Manager" />
       <div className="flex h-[calc(100vh-4rem)]">
-        <Sidebar 
+        <Sidebar
           role="Product Manager"
           currentSection={activeSection}
           onSectionChange={changeSection}
         />
         <div className="flex-1 space-y-4 p-8 pt-6 overflow-auto bg-secondary">
           <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight text-primary">
-              Hello, {Session?.user?.name || "Product Manager"}
+            <h2 className="text-2xl font-semibold tracking-tight text-primary">
+              {Session?.user?.name || "Product Manager"}{" "}
+              <span className="text-xl font-light">
+                here’s a quick look at the products
+              </span>
             </h2>
           </div>
 
