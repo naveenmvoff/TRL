@@ -126,8 +126,8 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [trlItems, setTrlItems] = useState<TRLItem[]>([]);
   const [productIds, setProductIds] = useState<string[]>([]);
 
-  console.log("trlItems==", trlItems)
-  
+  console.log("trlItems==", trlItems);
+
   const [productId, setProductId] = useState<string>(() => {
     if (clientSideParams && typeof clientSideParams.id === "string") {
       return clientSideParams.id;
@@ -135,33 +135,40 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     return params.id;
   });
 
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
-  const [selectedSection, setSelectedSection] = useState<SectionType | null>(null);
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
+    null
+  );
+  const [selectedSection, setSelectedSection] = useState<SectionType | null>(
+    null
+  );
   const [chartData, setChartData] = useState<ChartData[]>([]);
 
   const fetchTrlMasterData = async () => {
     try {
       const response = await fetch("/api/trl", {
         headers: {
-          'Accept': 'application/json',
+          Accept: "application/json",
         },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
       }
-      
+
       const data = await response.json();
-      console.log("data===", data)
-      
+      console.log("data===", data);
+
       if (data.success && Array.isArray(data.data)) {
-        const sortedData = data.data.sort((a: TrlMasterItem, b: TrlMasterItem) => 
-          a.trlLevelNumber - b.trlLevelNumber
+        const sortedData = data.data.sort(
+          (a: TrlMasterItem, b: TrlMasterItem) =>
+            a.trlLevelNumber - b.trlLevelNumber
         );
 
-        console.log("sortedData", sortedData)
-        
+        console.log("sortedData", sortedData);
+
         setTrlItems(
           sortedData.map((item: TrlMasterItem) => ({
             _id: item._id,
@@ -197,73 +204,76 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
   const fetchTrlDetails = async () => {
     if (!productId) return;
-    
+
     try {
       const [masterResponse, detailsResponse] = await Promise.all([
         fetch("/api/trl", {
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
         }),
         fetch(`/api/trl-level?productId=${productId}`, {
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
-        })
+        }),
       ]);
-  
+
       const responses = await Promise.all([
         masterResponse.json().catch(() => ({ success: false })),
-        detailsResponse.json().catch(() => ({ success: false }))
+        detailsResponse.json().catch(() => ({ success: false })),
       ]);
-  
+
       const [masterData, detailsData] = responses;
-  
+
       if (masterData.success && detailsData.success) {
         // Sort master data by TRL level number
         const sortedMasterData = masterData.data.sort(
-          (a: TrlMasterItem, b: TrlMasterItem) => a.trlLevelNumber - b.trlLevelNumber
+          (a: TrlMasterItem, b: TrlMasterItem) =>
+            a.trlLevelNumber - b.trlLevelNumber
         );
 
-        const combinedData = sortedMasterData.map((masterItem: TrlMasterItem) => {
-          const levelDetails = detailsData.data.filter(
-            (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
-          );
+        const combinedData = sortedMasterData.map(
+          (masterItem: TrlMasterItem) => {
+            const levelDetails = detailsData.data.filter(
+              (detail: TrlLevelDetail) => detail.trlLevelId === masterItem._id
+            );
 
-          const sortedSubLevels = [...(masterItem.subLevels || [])].sort(
-            (a, b) => a.subLevelNumber - b.subLevelNumber
-          );
+            const sortedSubLevels = [...(masterItem.subLevels || [])].sort(
+              (a, b) => a.subLevelNumber - b.subLevelNumber
+            );
 
-          const firstSubLevel = sortedSubLevels[0];
-          const lastSubLevel = sortedSubLevels[sortedSubLevels.length - 1];
+            const firstSubLevel = sortedSubLevels[0];
+            const lastSubLevel = sortedSubLevels[sortedSubLevels.length - 1];
 
-          const firstSubLevelDetails = levelDetails.find(
-            (d: TrlLevelDetail) => d.subLevelId === firstSubLevel?._id
-          );
-          const lastSubLevelDetails = levelDetails.find(
-            (d: TrlLevelDetail) => d.subLevelId === lastSubLevel?._id
-          );
+            const firstSubLevelDetails = levelDetails.find(
+              (d: TrlLevelDetail) => d.subLevelId === firstSubLevel?._id
+            );
+            const lastSubLevelDetails = levelDetails.find(
+              (d: TrlLevelDetail) => d.subLevelId === lastSubLevel?._id
+            );
 
-          return {
-            _id: masterItem._id,
-            TrlLevelNumber: masterItem.trlLevelNumber,
-            trlLevelName: masterItem.trlLevelName,
-            subLevels: sortedSubLevels,
-            description: firstSubLevelDetails?.description || "",
-            status: calculateOverallStatus(levelDetails),
-            documentationLink: firstSubLevelDetails?.documentationLink || "",
-            otherNotes: firstSubLevelDetails?.otherNotes || "",
-            demoRequired: firstSubLevelDetails?.demoRequired || false,
-            demoStatus: firstSubLevelDetails?.demoStatus || "Pending",
-            startDate: firstSubLevelDetails?.startDate || "",
-            estimatedDate: lastSubLevelDetails?.estimatedDate || "",
-            extendedDate: lastSubLevelDetails?.extendedDate || "",
-          };
-        });
+            return {
+              _id: masterItem._id,
+              TrlLevelNumber: masterItem.trlLevelNumber,
+              trlLevelName: masterItem.trlLevelName,
+              subLevels: sortedSubLevels,
+              description: firstSubLevelDetails?.description || "",
+              status: calculateOverallStatus(levelDetails),
+              documentationLink: firstSubLevelDetails?.documentationLink || "",
+              otherNotes: firstSubLevelDetails?.otherNotes || "",
+              demoRequired: firstSubLevelDetails?.demoRequired || false,
+              demoStatus: firstSubLevelDetails?.demoStatus || "Pending",
+              startDate: firstSubLevelDetails?.startDate || "",
+              estimatedDate: lastSubLevelDetails?.estimatedDate || "",
+              extendedDate: lastSubLevelDetails?.extendedDate || "",
+            };
+          }
+        );
 
         setTrlItems(combinedData);
       } else {
-        throw new Error('Invalid data format received from API');
+        throw new Error("Invalid data format received from API");
       }
     } catch (error) {
       console.error("Error fetching TRL data:", error);
@@ -280,9 +290,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   }, [pathname, clientSideParams]);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -311,7 +321,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   useEffect(() => {
     // Initial load
     const loadChartData = () => {
-      const savedData = localStorage.getItem('productProgressData');
+      const savedData = localStorage.getItem("productProgressData");
       if (savedData) {
         const parsedData = JSON.parse(savedData);
         setChartData(parsedData);
@@ -323,22 +333,23 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
     // Set up storage event listener for updates
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'productProgressData') {
+      if (event.key === "productProgressData") {
         const newData = event.newValue ? JSON.parse(event.newValue) : [];
         setChartData(newData);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
-  const currentProductProgress = useMemo(() => 
-    chartData.find(item => item.productID === productId)?.progress ?? 0
-  , [chartData, productId]);
+  const currentProductProgress = useMemo(
+    () => chartData.find((item) => item.productID === productId)?.progress ?? 0,
+    [chartData, productId]
+  );
 
   const progressPercentage = currentProductProgress;
 
@@ -347,7 +358,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     trlId: string,
     levelName: string,
     levelNumber: number,
-    subLevels: TRLItem['subLevels']
+    subLevels: TRLItem["subLevels"]
   ) => {
     router.push(
       `/productManager/product-details/${productId}/${trlId}?name=${encodeURIComponent(
@@ -419,9 +430,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                     : "bg-gray-400"
                 }`}
               ></span>
-              <span className="text-xs font-medium">
-                {item.status}
-              </span>
+              <span className="text-xs font-medium">{item.status}</span>
             </div>
           </td>
         </tr>
@@ -452,24 +461,24 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           <main className="p-6">
             <div className="flex flex-row items-center justify-between space-x-4 mb-4">
               <div className="flex items-center gap-2">
-              
                 <IoArrowBackCircle
-                
-                onClick={() => router.push(`/productManager/dashboard`)}
+                  onClick={() => router.push(`/productManager/dashboard`)}
                   className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
                   size={35}
                 />
 
-
-                <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
+                <div className="flex items-center  px-4 py-2 rounded-full font-bold">
                   <h1
-                    className="text-gray-200 hover:cursor-pointer transition-all"
+                    className="text-gray-600 hover:cursor-pointer transition-all"
                     onClick={() => router.push(`/productManager/dashboard`)}
                   >
                     Home
                   </h1>
-                  <MdOutlineArrowForwardIos size={20} />
-                  <h1 className="text-white hover:cursor-context-menu">
+                  <MdOutlineArrowForwardIos
+                    className="text-gray-400"
+                    size={17}
+                  />
+                  <h1 className="text-primary font-bold hover:cursor-context-menu">
                     TRL Level
                   </h1>
                 </div>
@@ -485,11 +494,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               {productDetails?.product || "No Product Name"}
             </h2>
             <div className="flex flex-row bg-white border rounded-lg p-6 shadow-md items-center gap-8 mb-4">
-              
               <div className="flex items-center justify-center">
                 <div className="relative w-32 h-32">
                   <svg className="w-full h-full" viewBox="0 0 100 100">
-              
                     <circle
                       cx="50"
                       cy="50"
@@ -498,7 +505,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                       strokeWidth="10"
                       fill="none"
                     />
-                
+
                     <circle
                       cx="50"
                       cy="50"
@@ -515,10 +522,10 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                       className="transition-all duration-500 ease-in-out"
                     />
                   </svg>
-              
+
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-3xl font-bold text-gray-800">
-                      {isNaN(progressPercentage) ? '0' : progressPercentage}%
+                      {isNaN(progressPercentage) ? "0" : progressPercentage}%
                     </span>
                     <span className="text-xs text-gray-500 mt-1">
                       Completed
@@ -527,7 +534,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </div>
               </div>
 
-             
               <div className="flex flex-row justify-between flex-grow gap-4">
                 {[
                   {
@@ -612,7 +618,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-    
             <div className="bg-white border rounded-lg p-6 mb-4">
               <h2 className="text-lg font-semibold text-primary mb-4">
                 TRL Work Flow
@@ -630,7 +635,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                           "Estimated Date",
                           "Extended Date",
                           "Status",
-       
                         ].map((header) => (
                           <th
                             key={header}

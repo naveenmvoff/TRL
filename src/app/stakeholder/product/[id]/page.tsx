@@ -430,15 +430,15 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 />
 
 
-                <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
+                <div className="flex items-center px-4 py-2 rounded-full font-bold">
                   <h1
-                    className="text-gray-200 hover:cursor-pointer transition-all"
+                    className="text-gray-600 hover:cursor-pointer transition-all"
                     onClick={() => router.push(`/stakeholder/product`)}
                   >
                     Home
                   </h1>
-                  <MdOutlineArrowForwardIos size={20} />
-                  <h1 className="text-white hover:cursor-context-menu">
+                  <MdOutlineArrowForwardIos className="text-gray-400" size={17} />
+                  <h1 className="text-primary font-bold hover:cursor-context-menu">
                     TRL Level
                   </h1>
                 </div>

@@ -19,7 +19,7 @@ import Expand from "@/components/expand";
 // import SwitchTrlLevel from "@/components/switch-trlLevel";
 
 import DatePicker from "react-datepicker";
-import Select, { StylesConfig } from 'react-select';
+import Select, { StylesConfig } from "react-select";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -86,7 +86,8 @@ const commonSelectStyles: StylesConfig<SelectOption, false> = {
     zIndex: 9999,
     backgroundColor: "white",
     width: "inherit",
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    boxShadow:
+      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
   }),
   control: (base) => ({
     ...base,
@@ -101,14 +102,8 @@ const commonSelectStyles: StylesConfig<SelectOption, false> = {
       : state.isDisabled
       ? "#f3f4f6"
       : "white",
-    color: state.isSelected
-      ? "white"
-      : state.isDisabled
-      ? "#9ca3af"
-      : "black",
-    cursor: state.isDisabled
-      ? "not-allowed"
-      : "pointer",
+    color: state.isSelected ? "white" : state.isDisabled ? "#9ca3af" : "black",
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
     "&:hover": {
       backgroundColor: state.isSelected
         ? "#5D4FEF"
@@ -138,14 +133,8 @@ const statusSelectStyles: StylesConfig<SelectOption, false> = {
       : state.isDisabled
       ? "#f3f4f6"
       : "white",
-    color: state.isSelected
-      ? "white"
-      : state.isDisabled
-      ? "#9ca3af"
-      : "black",
-    cursor: state.isDisabled
-      ? "not-allowed"
-      : "pointer",
+    color: state.isSelected ? "white" : state.isDisabled ? "#9ca3af" : "black",
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
     "&:hover": {
       backgroundColor: state.isSelected
         ? "#5D4FEF"
@@ -161,7 +150,13 @@ const statusSelectStyles: StylesConfig<SelectOption, false> = {
   }),
 };
 
-const StatusSelect = ({ value, onChange, isDisabled, className, placeholder }: StatusSelectProps) => {
+const StatusSelect = ({
+  value,
+  onChange,
+  isDisabled,
+  className,
+  placeholder,
+}: StatusSelectProps) => {
   const handleSelectChange = (selectedOption: SelectOption | null) => {
     if (selectedOption) {
       onChange(selectedOption.value);
@@ -256,11 +251,11 @@ export default function ProductManager() {
   // Add overflow hidden to body
   useEffect(() => {
     // Add overflow hidden to prevent page scrollbar
-    document.body.style.overflow = 'hidden';
-    
+    document.body.style.overflow = "hidden";
+
     // Clean up on unmount
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -322,25 +317,27 @@ export default function ProductManager() {
   console.log("Filtered TRL Content:", filteredContent);
 
   // Combine subLevels with trlLevelContent
-  const combinedTrlItems = subLevels.map((subLevel: { _id: string; subLevelName: string }) => {
-    // Find matching content from trlLevelContent
-    const matchingContent = trlLevelContent.find(
-      (content: TRLItem) => content.subLevelId === subLevel._id
-    );
-    // console.log("Matching Content:", matchingContent);
+  const combinedTrlItems = subLevels.map(
+    (subLevel: { _id: string; subLevelName: string }) => {
+      // Find matching content from trlLevelContent
+      const matchingContent = trlLevelContent.find(
+        (content: TRLItem) => content.subLevelId === subLevel._id
+      );
+      // console.log("Matching Content:", matchingContent);
 
-    return {
-      id: subLevel._id,
-      segregation: subLevel.subLevelName,
-      description: matchingContent?.description || "-",
-      currentUpdate: matchingContent?.currentUpdate || "-",
-      status: matchingContent?.status || "Pending",
-      documentationLink: matchingContent?.documentationLink,
-      otherNotes: matchingContent?.otherNotes,
-      demoRequired: matchingContent?.demoRequired,
-      demoStatus: matchingContent?.demoStatus,
-    };
-  });
+      return {
+        id: subLevel._id,
+        segregation: subLevel.subLevelName,
+        description: matchingContent?.description || "-",
+        currentUpdate: matchingContent?.currentUpdate || "-",
+        status: matchingContent?.status || "Pending",
+        documentationLink: matchingContent?.documentationLink,
+        otherNotes: matchingContent?.otherNotes,
+        demoRequired: matchingContent?.demoRequired,
+        demoStatus: matchingContent?.demoStatus,
+      };
+    }
+  );
 
   const handleEdit = (item: TRLItem) => {
     // Find matching content from filteredContent
@@ -527,24 +524,30 @@ export default function ProductManager() {
                     size={35}
                   />
 
-                  <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
+                  <div className="flex items-center px-4 py-2 rounded-full font-bold">
                     <h1
-                      className="text-gray-200 hover:cursor-pointer transition-all"
+                      className="text-gray-600 hover:cursor-pointer transition-all"
                       onClick={() => router.push(`/productManager/dashboard`)}
                     >
                       Home
                     </h1>
-                    <MdOutlineArrowForwardIos size={20} />
+                    <MdOutlineArrowForwardIos
+                      className="text-gray-400"
+                      size={17}
+                    />
                     <h1
-                      className="text-gray-200 hover:cursor-pointer transition-all"
+                      className="text-gray-600 hover:cursor-pointer transition-all"
                       onClick={() =>
                         router.push(`/productManager/product-details/${id}`)
                       }
                     >
                       TRL Level
                     </h1>
-                    <MdOutlineArrowForwardIos size={20} />
-                    <h1 className="text-white hover:cursor-context-menu">
+                    <MdOutlineArrowForwardIos
+                      className="text-gray-400"
+                      size={17}
+                    />
+                    <h1 className="text-primary font-bold hover:cursor-context-menu">
                       {trlLevelName}
                     </h1>
                   </div>
@@ -558,7 +561,6 @@ export default function ProductManager() {
               {/* /7/7/7 */}
             </div>
             <div className="bg-white rounded-md shadow-sm">
-          
               <div className="p-6">
                 <h2 className="text-xl font-medium text-gray-800">
                   Product Details
@@ -572,21 +574,11 @@ export default function ProductManager() {
                   <table className="w-full rounded-md">
                     <thead className="bg-gray-700">
                       <tr className="border-t border-b font-normal text-sm text-gray-50">
-                        <th className="py-3 px-6 text-left">
-                          TRL SEGREGATION
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          DESCRIPTION
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          CURRENT UPDATE
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          STATUS
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          ACTIONS
-                        </th>
+                        <th className="py-3 px-6 text-left">TRL SEGREGATION</th>
+                        <th className="py-3 px-6 text-left">DESCRIPTION</th>
+                        <th className="py-3 px-6 text-left">CURRENT UPDATE</th>
+                        <th className="py-3 px-6 text-left">STATUS</th>
+                        <th className="py-3 px-6 text-left">ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -610,11 +602,11 @@ export default function ProductManager() {
                           </td>
                           <td className="py-4 px-6 text-black">
                             {item.description.split(" ").length > 5
-                                ? `${item.description
-                                    .split(" ")
-                                    .slice(0, 5)
-                                    .join(" ")}...`
-                                : item.currentUpdate}
+                              ? `${item.description
+                                  .split(" ")
+                                  .slice(0, 5)
+                                  .join(" ")}...`
+                              : item.currentUpdate}
                           </td>
                           <td className="py-4 px-6 text-black">
                             <span
@@ -817,7 +809,9 @@ export default function ProductManager() {
                                 ...formData,
                                 demoRequired: boolValue,
                                 // Reset demoStatus when switching to No
-                                demoStatus: boolValue ? formData.demoStatus : "",
+                                demoStatus: boolValue
+                                  ? formData.demoStatus
+                                  : "",
                               });
                             }
                           }
@@ -876,7 +870,7 @@ export default function ProductManager() {
                       <p className="text-md font-regular text-black mt-2">
                         Documentation Link
                       </p>
-                      <textarea
+                      {/* <textarea
                         value={formData?.documentationLink || ""}
                         onChange={(e) =>
                           setFormData(
@@ -888,10 +882,251 @@ export default function ProductManager() {
                               : null
                           )
                         }
-                        placeholder="Provide the Document Link"
-                        className="w-full p-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
-                        rows={1}
+                        onBlur={(e) => {
+                          const links = e.target.value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/;
+
+                          if (links.some((link) => !urlPattern.test(link))) {
+                            alert("One or more links are invalid");
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
+                      /> */}
+
+                      {/* <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData(
+                            formData
+                              ? { ...formData, documentationLink: value }
+                              : null
+                          );
+
+                          const links = value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/;
+
+                          const invalidLinks = links.filter(
+                            (link) => !urlPattern.test(link)
+                          );
+
+                          if (invalidLinks.length > 0) {
+                            alert(
+                              `Invalid link(s) found:\n\n${invalidLinks.join(
+                                "\n"
+                              )}\n\nPlease provide valid links.`
+                            );
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
+                      /> */}
+
+                      <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData(
+                            formData
+                              ? { ...formData, documentationLink: value }
+                              : null
+                          );
+                        }}
+                        onBlur={(e) => {
+                          const links = e.target.value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?((([\w-]+\.)+[\w-]+)|localhost)(:\d+)?(\/[\w-.~:/?#[\]@!$&'()*+,;=%]*)?$/;
+
+                          if (links.some((link) => !urlPattern.test(link))) {
+                            notify("Please provide valid links", "warning");
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?((([\w-]+\.)+[\w-]+)|localhost)(:\d+)?(\/[\w-.~:/?#[\]@!$&'()*+,;=%]*)?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
                       />
+
+                      {/* <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData(
+                            formData
+                              ? { ...formData, documentationLink: value }
+                              : null
+                          );
+                        }}
+                        onBlur={(e) => {
+                          const links = e.target.value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/;
+
+                          if (links.some((link) => !urlPattern.test(link))) {
+                            alert("Please provide valid links");
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
+                      /> */}
+
+                      {/* <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData(
+                            formData
+                              ? { ...formData, documentationLink: value }
+                              : null
+                          );
+
+                          const links = value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/;
+
+                          if (links.some((link) => !urlPattern.test(link))) {
+                            alert("Please provide valid links");
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
+                      /> */}
+
+                      {/* <textarea
+                        value={formData?.documentationLink || ""}
+                        onChange={(e) =>
+                          setFormData(
+                            formData
+                              ? {
+                                  ...formData,
+                                  documentationLink: e.target.value,
+                                }
+                              : null
+                          )
+                        }
+                        onBlur={(e) => {
+                          const links = e.target.value
+                            .split(",")
+                            .map((link) => link.trim())
+                            .filter((link) => link !== "");
+
+                          const urlPattern =
+                            /^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/;
+
+                          const invalidLinks = links.filter(
+                            (link) => !urlPattern.test(link)
+                          );
+
+                          if (invalidLinks.length > 0) {
+                            alert(
+                              `Invalid link(s) found:\n\n${invalidLinks.join(
+                                "\n"
+                              )}\n\nPlease provide valid links.`
+                            );
+                          }
+                        }}
+                        placeholder="Provide the Document Links (comma separated)"
+                        className={`w-full p-2 border ${
+                          formData?.documentationLink &&
+                          formData.documentationLink
+                            .split(",")
+                            .some(
+                              (link) =>
+                                !/^(https?:\/\/)?([\w.-]+)(\.[\w.-]+)(\/[\w.-]*)*\/?$/.test(
+                                  link.trim()
+                                )
+                            )
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-secondary"
+                        } text-black rounded-md focus:outline-none resize-none`}
+                        rows={2}
+                      /> */}
 
                       <p className="text-md font-regular text-black mt-2">
                         Any Others Notes
@@ -966,7 +1201,8 @@ export default function ProductManager() {
 
                         <div>
                           <p className="text-md font-regular text-black mt-2">
-                            Estimated Date <span className="text-red-500">*</span>
+                            Estimated Date{" "}
+                            <span className="text-red-500">*</span>
                           </p>
                           <DatePicker
                             selected={formData?.estimatedDate || null}
@@ -1043,7 +1279,9 @@ export default function ProductManager() {
                       <StatusSelect
                         value={formData?.status || ""}
                         onChange={(value) =>
-                          setFormData(formData ? { ...formData, status: value } : null)
+                          setFormData(
+                            formData ? { ...formData, status: value } : null
+                          )
                         }
                         isDisabled={!canMarkAsCompleted(formData)}
                         className="w-36 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -1198,9 +1436,26 @@ export default function ProductManager() {
                       <p className="text-md font-regular text-black mt-2">
                         Documentation Link
                       </p>
-                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
-                        {formData?.documentationLink || "-"}
-                      </p>
+                      
+                      <div className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.documentationLink
+                          ? formData.documentationLink
+                              .split(",")
+                              .map((link, index) =>
+                                link.trim() ? (
+                                  <a
+                                    key={index}
+                                    href={link.trim()}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-blue-500 hover:underline truncate"
+                                  >
+                                    {link.trim()}
+                                  </a>
+                                ) : null
+                              )
+                          : "-"}
+                      </div>
 
                       <p className="text-md font-regular text-black mt-2">
                         Other Notes
@@ -1289,8 +1544,8 @@ export default function ProductManager() {
       {expandedContent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-auto">
           <div className="max-w-3xl w-full">
-            <Expand 
-              title={expandedContent.title} 
+            <Expand
+              title={expandedContent.title}
               onClose={() => setExpandedContent(null)}
             >
               <div className="p-4">

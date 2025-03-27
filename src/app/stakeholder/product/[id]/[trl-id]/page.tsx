@@ -91,7 +91,7 @@ export default function ProductManager() {
   const searchParams = useSearchParams();
   const trlLevelName = searchParams.get("name");
   const trlLevelNumber = searchParams.get("level");
-  const trlId = params["trl-id"] as string; 
+  const trlId = params["trl-id"] as string;
   const subLevelsParam = searchParams.get("subLevels");
   const subLevels = subLevelsParam
     ? JSON.parse(decodeURIComponent(subLevelsParam))
@@ -109,9 +109,9 @@ export default function ProductManager() {
   const id = params.id as string;
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -240,31 +240,33 @@ export default function ProductManager() {
               <div className="flex flex-row items-center justify-between space-x-4 mb-4">
                 <div className="flex items-center gap-2">
                   <IoArrowBackCircle
-                    onClick={() =>
-                      router.push(`/stakeholder/product/${id}`)
-                    }
+                    onClick={() => router.push(`/stakeholder/product/${id}`)}
                     className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
                     size={35}
                   />
 
-                  <div className="flex items-center bg-gray-600 px-4 py-2 rounded-full font-bold">
+                  <div className="flex items-center px-4 py-2 rounded-full font-bold">
                     <h1
-                      className="text-gray-200 hover:cursor-pointer transition-all"
+                      className="text-gray-600 hover:cursor-pointer transition-all"
                       onClick={() => router.push(`/stakeholder/product`)}
                     >
                       Home
                     </h1>
-                    <MdOutlineArrowForwardIos size={20} />
+                    <MdOutlineArrowForwardIos
+                      className="text-gray-400"
+                      size={17}
+                    />
                     <h1
-                      className="text-gray-200 hover:cursor-pointer transition-all"
-                      onClick={() =>
-                        router.push(`/stakeholder/product/${id}`)
-                      }
+                      className="text-gray-600 hover:cursor-pointer transition-all"
+                      onClick={() => router.push(`/stakeholder/product/${id}`)}
                     >
                       TRL Level
                     </h1>
-                    <MdOutlineArrowForwardIos size={20} />
-                    <h1 className="text-white hover:cursor-context-menu">
+                    <MdOutlineArrowForwardIos
+                      className="text-gray-400"
+                      size={17}
+                    />
+                    <h1 className="text-primary font-bold hover:cursor-context-menu">
                       {trlLevelName}
                     </h1>
                   </div>
@@ -285,18 +287,10 @@ export default function ProductManager() {
                   <table className="w-full rounded-md">
                     <thead className="bg-gray-700">
                       <tr className="border-t border-b font-normal text-sm text-gray-50">
-                        <th className="py-3 px-6 text-left">
-                          TRL SEGREGATION
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          DESCRIPTION
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          CURRENT UPDATED
-                        </th>
-                        <th className="py-3 px-6 text-left">
-                          STATUS
-                        </th>
+                        <th className="py-3 px-6 text-left">TRL SEGREGATION</th>
+                        <th className="py-3 px-6 text-left">DESCRIPTION</th>
+                        <th className="py-3 px-6 text-left">CURRENT UPDATED</th>
+                        <th className="py-3 px-6 text-left">STATUS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -320,11 +314,11 @@ export default function ProductManager() {
                           </td>
                           <td className="py-4 px-6 text-black">
                             {item.description.split(" ").length > 5
-                                ? `${item.description
-                                    .split(" ")
-                                    .slice(0, 5)
-                                    .join(" ")}...`
-                                : item.currentUpdate}
+                              ? `${item.description
+                                  .split(" ")
+                                  .slice(0, 5)
+                                  .join(" ")}...`
+                              : item.currentUpdate}
                           </td>
                           <td className="py-4 px-6 text-black">
                             <span
@@ -483,9 +477,25 @@ export default function ProductManager() {
                       <p className="text-md font-regular text-black mt-2">
                         Documentation Link
                       </p>
-                      <p className="w-full p-2 border text-black rounded-md bg-gray-50">
-                        {formData?.documentationLink || "-"}
-                      </p>
+                      <div className="w-full p-2 border text-black rounded-md bg-gray-50">
+                        {formData?.documentationLink
+                          ? formData.documentationLink
+                              .split(",")
+                              .map((link, index) =>
+                                link.trim() ? (
+                                  <a
+                                    key={index}
+                                    href={link.trim()}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-blue-500 hover:underline truncate"
+                                  >
+                                    {link.trim()}
+                                  </a>
+                                ) : null
+                              )
+                          : "-"}
+                      </div>
 
                       <p className="text-md font-regular text-black mt-2">
                         Other Notes
