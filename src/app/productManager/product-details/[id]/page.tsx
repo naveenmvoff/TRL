@@ -484,10 +484,12 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </div>
               </div>
 
-              <SwitchTrl
-                productIds={productIds}
-                onIndexChange={handleIndexChange}
-              />
+              <div className="flex-row">
+                <SwitchTrl
+                  productIds={productIds}
+                  onIndexChange={handleIndexChange}
+                />
+              </div>
             </div>
 
             <h2 className="text-xl font-semibold text-primary mb-1">

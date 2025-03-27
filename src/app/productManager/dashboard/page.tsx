@@ -6,7 +6,7 @@ import type { FC } from "react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import SwitchTrl from '@/components/switch-trl';
+import SwitchTrl from "@/components/switch-trl";
 
 interface Product {
   _id: string;
@@ -25,7 +25,7 @@ interface ProductDetailsProps {
   email: string;
   factoryNumber: string;
   PMID?: string;
-  productsData: Product[] | null; 
+  productsData: Product[] | null;
 }
 
 const ProductDetails: FC<ProductDetailsProps> = ({
@@ -36,10 +36,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
 }) => {
   const router = useRouter();
 
-  if (!productsData) return <div>Loading...</div>; 
+  if (!productsData) return <div>Loading...</div>;
 
   const handleProductClick = (productId: string, index: number) => {
-    localStorage.setItem('currentProductIndex', index.toString());
+    localStorage.setItem("currentProductIndex", index.toString());
     router.push(`/productManager/product-details/${productId}`);
   };
 
@@ -47,7 +47,9 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     <div className="p-6 bg-secondary min-h-full">
       {/* User Info Section */}
       <div className="bg-white rounded-md p-6 mb-4 shadow-sm">
-        <h2 className="text-xl font-bold tracking-tight text-primary mb-1">Hello, {userName}</h2>
+        <h2 className="text-xl font-bold tracking-tight text-primary mb-1">
+          Hello, {userName}
+        </h2>
         {/* <h2 className="text-black font-medium mb-4">PMID, {PMID}</h2> */}
         <div className="space-y-2 text-sm">
           <div className="flex">
@@ -146,43 +148,45 @@ export default function ProductManager() {
 
   useEffect(() => {
     // Add overflow hidden to prevent page scrollbar
-    document.body.style.overflow = 'hidden';
-    
+    document.body.style.overflow = "hidden";
+
     // Clean up on unmount
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
   useEffect(() => {
     // Try to load product IDs from localStorage
-    const savedIds = localStorage.getItem('dashboardProductIds');
+    const savedIds = localStorage.getItem("dashboardProductIds");
     if (savedIds) {
-        setProductIds(JSON.parse(savedIds));
+      setProductIds(JSON.parse(savedIds));
     }
 
     const fetchPMData = async () => {
-        setIsLoading(true);
-        if (PMID) {
-            try {
-                const response = await fetch(`/api/product-manager/pm?id=${Session.user.id}`);
-                const data = await response.json();
-                setProductData(data);
-                
-                // Extract and save product IDs in order
-                const ids = data.products.map((product: Product) => product._id);
-                setProductIds(ids);
-                localStorage.setItem('dashboardProductIds', JSON.stringify(ids));
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setIsLoading(false);
-            }
+      setIsLoading(true);
+      if (PMID) {
+        try {
+          const response = await fetch(
+            `/api/product-manager/pm?id=${Session.user.id}`
+          );
+          const data = await response.json();
+          setProductData(data);
+
+          // Extract and save product IDs in order
+          const ids = data.products.map((product: Product) => product._id);
+          setProductIds(ids);
+          localStorage.setItem("dashboardProductIds", JSON.stringify(ids));
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setIsLoading(false);
         }
+      }
     };
 
     if (!savedIds || PMID) {
-        fetchPMData();
+      fetchPMData();
     }
   }, [Session, PMID]);
 
@@ -214,7 +218,10 @@ export default function ProductManager() {
             factoryNumber={Session?.user?.factory || "Not assigned"}
             productsData={productData?.products || []}
           />
-          <SwitchTrl productIds={productIds} />
+          {/* <div className="sr-only"> */}
+          <div className="hidden">
+            <SwitchTrl productIds={productIds} />
+          </div>
         </div>
       </div>
     </div>

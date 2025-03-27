@@ -419,41 +419,40 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         <Sidebar />
         <div className="flex-1 space-y-4 p-6 pt-6 overflow-auto bg-secondary">
           <main className="">
-            <div className="flex flex-row items-center justify-between space-x-4 mb-4">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-row items-center justify-between space-x-4">
+              <div className="flex flex-row items-center justify-between space-x-4 mb-4">
+                <div className="flex items-center gap-2">
               
-                <IoArrowBackCircle
+                  <IoArrowBackCircle
                 
                     onClick={() => router.push(`/stakeholder/product`)}
-                  className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
-                  size={35}
-                />
+                    className="text-gray-600 hover:text-gray-700 hover:cursor-pointer transition-colors"
+                    size={35}
+                  />
 
 
-                <div className="flex items-center px-4 py-2 rounded-full font-bold">
-                  <h1
-                    className="text-gray-600 hover:cursor-pointer transition-all"
-                    onClick={() => router.push(`/stakeholder/product`)}
-                  >
-                    Home
-                  </h1>
-                  <MdOutlineArrowForwardIos className="text-gray-400" size={17} />
-                  <h1 className="text-primary font-bold hover:cursor-context-menu">
-                    TRL Level
-                  </h1>
+                  <div className="flex items-center px-4 py-2 rounded-full font-bold">
+                    <h1
+                      className="text-gray-600 hover:cursor-pointer transition-all"
+                      onClick={() => router.push(`/stakeholder/product`)}
+                    >
+                      Home
+                    </h1>
+                    <MdOutlineArrowForwardIos className="text-gray-400" size={17} />
+                    <h1 className="text-primary font-bold hover:cursor-context-menu">
+                      TRL Level
+                    </h1>
+                  </div>
                 </div>
               </div>
-
-              {productIds && productIds.length > 0 ? (
-                <div >
-                  <SwitchTrl
-                      productIds={productIds}
-                      onIndexChange={handleIndexChange}
-                    />
-                </div>
-              ) : (
-                <div className="text-red-500">No product IDs available</div>
-              )}
+              
+              {/* Hidden but functional SwitchTrl */}
+              <div className="flex-">
+                <SwitchTrl
+                  productIds={productIds}
+                  onIndexChange={handleIndexChange}
+                />
+              </div>
             </div>
 
             <h2 className="text-xl font-semibold text-primary mb-1">
