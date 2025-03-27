@@ -704,7 +704,7 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2 flex items-center">
+                      <p className="text-md font-semibold text-gray-800 mt-2 flex items-center">
                         Description <span className="text-red-500">*</span>
                       </p>
                       <textarea
@@ -745,7 +745,7 @@ export default function ProductManager() {
                           )}
                       </h1>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Current Update <span className="text-red-500">*</span>
                       </p>
                       <textarea
@@ -788,7 +788,7 @@ export default function ProductManager() {
                           )}
                       </h1>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Demo Required
                       </p>
 
@@ -823,7 +823,7 @@ export default function ProductManager() {
                       />
                       {formData?.demoRequired && (
                         <>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Demo Status
                           </p>
                           <div className="relative z-[1000]">
@@ -867,7 +867,7 @@ export default function ProductManager() {
                     </div>
 
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Documentation Link
                       </p>
                       {/* <textarea
@@ -1128,7 +1128,7 @@ export default function ProductManager() {
                         rows={2}
                       /> */}
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Any Others Notes
                       </p>
                       <textarea
@@ -1151,7 +1151,7 @@ export default function ProductManager() {
 
                       <div className="flex flex-row gap-4">
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Start Date <span className="text-red-500">*</span>
                           </p>
                           <DatePicker
@@ -1200,7 +1200,7 @@ export default function ProductManager() {
                         </div>
 
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Estimated Date{" "}
                             <span className="text-red-500">*</span>
                           </p>
@@ -1249,7 +1249,7 @@ export default function ProductManager() {
                         </div>
 
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Extended Date
                           </p>
                           <DatePicker
@@ -1272,7 +1272,7 @@ export default function ProductManager() {
                         </div>
                       </div>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Status
                       </p>
 
@@ -1314,7 +1314,7 @@ export default function ProductManager() {
           </div>
         )}
         {showPopupView && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-5/6 max-h-[90vh] overflow-hidden">
               <div className="max-h-[85vh] overflow-y-auto">
                 <div className="flex flex-row justify-between items-start sticky top-0 bg-white z-10">
@@ -1353,7 +1353,7 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Description
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -1385,7 +1385,7 @@ export default function ProductManager() {
                         )}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Current Update
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -1417,14 +1417,14 @@ export default function ProductManager() {
                         )}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Demo Required
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
                         {formData?.demoRequired ? "Yes" : "No"}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Demo Status
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
@@ -1433,7 +1433,7 @@ export default function ProductManager() {
                     </div>
 
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Documentation Link
                       </p>
                       
@@ -1457,7 +1457,7 @@ export default function ProductManager() {
                           : "-"}
                       </div>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Other Notes
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -1491,7 +1491,7 @@ export default function ProductManager() {
 
                       <div className="flex flex-row gap-4">
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Start Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -1500,7 +1500,7 @@ export default function ProductManager() {
                         </div>
 
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Estimated Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -1509,7 +1509,7 @@ export default function ProductManager() {
                         </div>
 
                         <div className="pr-4">
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Extended Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -1518,7 +1518,7 @@ export default function ProductManager() {
                         </div>
                       </div>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Status
                       </p>
                       <p className="w-28 p-2 border text-black rounded-md bg-gray-50">

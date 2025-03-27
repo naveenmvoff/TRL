@@ -394,7 +394,7 @@ export default function ProductManager() {
                 <div className="space-y">
                   <div className="flex flex-row gap-4 justify-between">
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Description
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -426,7 +426,7 @@ export default function ProductManager() {
                         )}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Current Update
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -458,14 +458,14 @@ export default function ProductManager() {
                         )}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Demo Required
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
                         {formData?.demoRequired ? "Yes" : "No"}
                       </p>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Demo Status
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50">
@@ -474,7 +474,7 @@ export default function ProductManager() {
                     </div>
 
                     <div className="w-1/2 flex flex-col">
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Documentation Link
                       </p>
                       <div className="w-full p-2 border text-black rounded-md bg-gray-50">
@@ -497,7 +497,7 @@ export default function ProductManager() {
                           : "-"}
                       </div>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Other Notes
                       </p>
                       <p className="w-full p-2 border text-black rounded-md bg-gray-50 overflow-hidden text-justify">
@@ -531,7 +531,7 @@ export default function ProductManager() {
 
                       <div className="flex flex-row gap-4">
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Start Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -540,7 +540,7 @@ export default function ProductManager() {
                         </div>
 
                         <div>
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Estimated Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -549,7 +549,7 @@ export default function ProductManager() {
                         </div>
 
                         <div className="pr-4">
-                          <p className="text-md font-regular text-black mt-2">
+                          <p className="text-md font-semibold text-gray-800 mt-2">
                             Extended Date
                           </p>
                           <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
@@ -558,7 +558,7 @@ export default function ProductManager() {
                         </div>
                       </div>
 
-                      <p className="text-md font-regular text-black mt-2">
+                      <p className="text-md font-semibold text-gray-800 mt-2">
                         Status
                       </p>
                       <p className="w-28 p-2 border text-black rounded-md bg-gray-50">
